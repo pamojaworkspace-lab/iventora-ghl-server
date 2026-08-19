@@ -1,4 +1,5 @@
 import express from "express";
+import { readFileSync } from "fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -190,6 +191,11 @@ app.use((req, res, next) => {
 
 app.get("/", (req, res) => {
     res.json({ ok: true, service: "iventora-ghl-mcp-server", mcpEndpoint: "/mcp" });
+});
+
+app.get("/apply", (req, res) => {
+    res.set("Content-Type", "text/html");
+    res.send(readFileSync(new URL("./vendor-form-ascii-full.html", import.meta.url), "utf8"));
 });
 
 app.post("/mcp", async (req, res) => {
