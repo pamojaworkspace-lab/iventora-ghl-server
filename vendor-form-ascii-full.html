@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iventora Events - Vendor Intake &amp; Application Form</title>
+<style>
+  :root{
+    --plum:#4A2545;
+    --plum-dark:#341831;
+    --gold:#B5892A;
+    --gold-light:#E4C97A;
+    --bg-tint:#F6F1F4;
+    --card:#FFFFFF;
+    --text:#262223;
+    --text-soft:#6B5F65;
+    --line:#DED2D8;
+    --danger:#B3261E;
+    --success:#1E7A46;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg-tint);
+    color:var(--text);
+    line-height:1.5;
+  }
+  .page{max-width:880px;margin:0 auto;padding:0 20px 80px;}
+  header.hero{
+    background:linear-gradient(135deg,var(--plum) 0%,var(--plum-dark) 100%);
+    color:#fff;
+    padding:36px 20px 30px;
+    margin-bottom:0;
+  }
+  header.hero .inner{max-width:880px;margin:0 auto;}
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--gold-light);
+    margin:0 0 8px;
+  }
+  h1.title{font-size:30px;margin:0 0 10px;font-weight:800;}
+  .sub{font-size:15.5px;color:#EADFE7;margin:0 0 4px;}
+  .mission{
+    display:inline-block;
+    margin-top:14px;
+    padding:8px 14px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    color:#fff;
+  }
+  .banner{
+    background:#fff;
+    border-bottom:1px solid var(--line);
+  }
+  .banner .inner{
+    max-width:880px;margin:0 auto;padding:14px 20px;
+    display:flex;gap:10px;align-items:center;font-size:13.5px;color:var(--text-soft);
+  }
+  .banner .inner strong{color:var(--plum);}
+  form{margin-top:28px;}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:22px;
+    overflow:hidden;
+  }
+  .card-head{
+    background:var(--plum);
+    color:#fff;
+    padding:13px 20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .card-head .num{
+    width:26px;height:26px;border-radius:50%;
+    background:var(--gold);
+    color:var(--plum-dark);
+    font-weight:800;font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .card-head h2{font-size:16px;margin:0;font-weight:700;letter-spacing:.01em;}
+  .card-body{padding:22px 20px 24px;}
+  .card-note{font-size:13px;color:var(--text-soft);font-style:italic;margin:-6px 0 18px;}
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-size:13.5px;font-weight:700;color:var(--plum);margin-bottom:6px;
+  }
+  .field .hint{font-weight:400;color:var(--text-soft);font-style:italic;font-size:12.5px;}
+  .field input[type=text],
+  .field input[type=email],
+  .field input[type=tel],
+  .field input[type=url],
+  .field input[type=date],
+  .field input[type=number],
+  .field select,
+  .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:14.5px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(181,137,42,.18);
+  }
+  .field textarea{resize:vertical;min-height:70px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:560px){.row{grid-template-columns:1fr;}}
+  .counter{font-size:12px;color:var(--text-soft);margin-top:4px;text-align:right;}
+  .counter.ok{color:var(--success);}
+  .counter.warn{color:var(--danger);}
+  .check-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px;
+  }
+  @media (max-width:640px){.check-grid{grid-template-columns:repeat(2,1fr);}}
+  .check-item{
+    display:flex;align-items:center;gap:8px;
+    font-size:14px;padding:6px 8px;border-radius:6px;
+    cursor:pointer;
+  }
+  .check-item:hover{background:var(--bg-tint);}
+  .check-item input{width:16px;height:16px;accent-color:var(--plum);flex-shrink:0;cursor:pointer;}
+  .plan-options{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media (max-width:700px){.plan-options{grid-template-columns:1fr;}}
+  .plan{
+    border:2px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;
+    position:relative;transition:border-color .15s, background .15s;
+  }
+  .plan:hover{border-color:var(--gold-light);}
+  .plan input{position:absolute;top:14px;right:14px;width:16px;height:16px;accent-color:var(--gold);}
+  .plan.selected{border-color:var(--gold);background:#FBF6EA;}
+  .plan .plan-name{font-weight:800;color:var(--plum);font-size:15px;margin-bottom:4px;}
+  .plan .plan-price{font-weight:700;color:var(--success);font-size:13px;margin-bottom:8px;}
+  .plan .plan-desc{font-size:12.5px;color:var(--text-soft);}
+  .upload-zone{
+    border:2px dashed var(--line);
+    border-radius:10px;
+    padding:26px 16px;
+    text-align:center;
+    background:var(--bg-tint);
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .upload-zone.drag{border-color:var(--gold);background:#FBF6EA;}
+  .upload-zone p{margin:0;font-size:13.5px;color:var(--text-soft);}
+  .upload-zone strong{color:var(--plum);}
+  .upload-zone input[type=file]{display:none;}
+  .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+  .thumb{
+    position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;
+    border:1px solid var(--line);background:#eee;
+  }
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .thumb .rm{
+    position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;
+    background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .thumb.logo{width:84px;height:84px;}
+  .photo-count{margin-top:10px;font-size:13px;font-weight:600;}
+  .photo-count.low{color:var(--danger);}
+  .photo-count.good{color:var(--success);}
+  .agree-row{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--bg-tint);border-radius:8px;padding:12px 14px;margin-bottom:18px;
+  }
+  .agree-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--plum);flex-shrink:0;}
+  .agree-row label{font-size:13.5px;color:var(--text);}
+  .agree-row a{color:var(--plum);font-weight:700;}
+  .err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;}
+  .field.error input, .field.error textarea{border-color:var(--danger);}
+  .field.error .err{display:block;}
+  .submit-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    flex-wrap:wrap;margin-top:8px;
+  }
+  button.submit{
+    background:var(--plum);color:#fff;border:none;
+    padding:14px 30px;border-radius:999px;font-size:15px;font-weight:800;
+    cursor:pointer;transition:background .15s, transform .1s;
+    box-shadow:0 4px 14px rgba(74,37,69,.28);
+  }
+  button.submit:hover{background:var(--plum-dark);}
+  button.submit:active{transform:scale(.98);}
+  .submit-hint{font-size:12.5px;color:var(--text-soft);}
+  footer{text-align:center;font-size:12.5px;color:var(--text-soft);padding:30px 20px 10px;}
+  .success-screen{display:none;text-align:center;padding:60px 20px;}
+  .success-screen.show{display:block;}
+  .success-screen .check-circle{
+    width:64px;height:64px;border-radius:50%;background:var(--success);
+    color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;
+    margin:0 auto 18px;
+  }
+  .success-screen h2{color:var(--plum);font-size:24px;margin:0 0 10px;}
+  .success-screen p{color:var(--text-soft);max-width:480px;margin:0 auto 22px;font-size:14.5px;}
+  .success-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .btn-secondary{
+    background:#fff;border:1.5px solid var(--plum);color:var(--plum);
+    padding:11px 22px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer;
+  }
+  .btn-secondary:hover{background:var(--bg-tint);}
+  .summary-box{
+    text-align:left;max-width:520px;margin:0 auto 24px;background:var(--bg-tint);
+    border-radius:10px;padding:18px 20px;font-size:13.5px;
+  }
+  .summary-box div{margin-bottom:6px;}
+  .summary-box b{color:var(--plum);}
+  #formWrap.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Iventora Events</p>
+    <h1 class="title">Vendor Intake &amp; Application Form</h1>
+    <p class="sub">Tell us about your business so we can build out your listing.</p>
+    <span class="mission"> We're building the largest event vendor marketplace in the United States</span>
+  </div>
+</header>
+
+<div class="banner">
+  <div class="inner">
+    <span><strong>No business license, insurance, or certifications required to join.</strong> All plans are currently free during our early-access period.</span>
+  </div>
+</div>
+
+<div class="page">
+
+<div id="formWrap">
+<form id="vendorForm" novalidate>
+
+  <!-- 1. Business Information -->
+  <div class="card">
+    <div class="card-head"><span class="num">1</span><h2>Business Information</h2></div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field" data-required>
+          <label for="bizName">Legal Business Name</label>
+          <input type="text" id="bizName" name="bizName" required>
+          <div class="err">Please enter your business name.</div>
+        </div>
+        <div class="field">
+          <label for="dba">DBA / Trade Name <span class="hint">(if different)</span></label>
+          <input type="text" id="dba" name="dba">
+        </div>
+      </div>
+      <div class="field" data-required>
+        <label for="address">Business Address</label>
+        <input type="text" id="address" name="address" required>
+        <div class="err">Please enter your business address.</div>
+      </div>
+      <div class="row">
+        <div class="field" data-required>
+          <label for="cityState">City / State / ZIP</label>
+          <input type="text" id="cityState" name="cityState" required>
+          <div class="err">Please enter city, state, and ZIP.</div>
+        </div>
+        <div class="field">
+          <label for="website">Website</label>
+          <input type="url" id="website" name="website" placeholder="https://">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" data-required>
+          <label for="contactName">Primary Contact Name &amp; Title</label>
+          <input type="text" id="contactName" name="contactName" required>
+          <div class="err">Please enter a contact name.</div>
+        </div>
+        <div class="field" data-required>
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required>
+          <div class="err">Please enter a valid email address.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" data-required>
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" required>
+          <div class="err">Please enter a phone number.</div>
+        </div>
+        <div class="field">
+          <label for="contactMethod">Preferred Contact Method</label>
+          <select id="contactMethod" name="contactMethod">
+            <option value="Email">Email</option>
+            <option value="Phone">Phone</option>
+            <option value="Text">Text</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Service Category & Area -->
+  <div class="card">
+    <div class="card-head"><span class="num">2</span><h2>Service Category &amp; Area</h2></div>
+    <div class="card-body">
+      <p class="card-note">Check all categories that apply to your business.</p>
+      <div class="check-grid" id="categoryGrid">
+        <label class="check-item"><input type="checkbox" name="category" value="Event Venues">Event Venues</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Catering">Catering</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Photography">Photography</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Videography">Videography</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Event Planning">Event Planning</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Rentals">Rentals</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Floristry">Floristry</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Decorating">Decorating</label>
+        <label class="check-item"><input type="checkbox" name="category" value="DJs & Entertainment">DJs &amp; Entertainment</label>
+        <label class="check-item"><input type="checkbox" name="category" value="Transportation">Transportation</label>
+      </div>
+      <div class="err" id="categoryErr" style="margin-top:8px;">Please select at least one category.</div>
+
+      <p class="card-note" style="margin-top:20px;">Check all locations you actively serve.</p>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" name="location" value="Phoenix, AZ">Phoenix, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Scottsdale, AZ">Scottsdale, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Tempe, AZ">Tempe, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Gilbert, AZ">Gilbert, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Chandler, AZ">Chandler, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Mesa, AZ">Mesa, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Glendale, AZ">Glendale, AZ</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Columbus, OH">Columbus, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Cleveland, OH">Cleveland, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Cincinnati, OH">Cincinnati, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Dayton, OH">Dayton, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Akron, OH">Akron, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Toledo, OH">Toledo, OH</label>
+        <label class="check-item"><input type="checkbox" name="location" value="Canton, OH">Canton, OH</label>
+      </div>
+
+      <div class="row" style="margin-top:18px;">
+        <div class="field">
+          <label for="radius">Service Radius (miles) from home base</label>
+          <input type="number" id="radius" name="radius" min="0">
+        </div>
+        <div class="field">
+          <label for="languages">Languages Spoken</label>
+          <input type="text" id="languages" name="languages">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Business Description -->
+  <div class="card">
+    <div class="card-head"><span class="num">3</span><h2>Business Description</h2></div>
+    <div class="card-body">
+      <div class="field">
+        <label for="tagline">Short Tagline <span class="hint">(10 words or fewer)</span></label>
+        <input type="text" id="tagline" name="tagline">
+        <div class="counter" id="taglineCounter">0 words</div>
+      </div>
+      <div class="field" data-required>
+        <label for="description">Full Business Description <span class="hint">(150-300 words - what you offer and what makes you different)</span></label>
+        <textarea id="description" name="description" rows="6" required></textarea>
+        <div class="counter" id="descCounter">0 words</div>
+        <div class="err">Please add a business description.</div>
+      </div>
+      <div class="field">
+        <label for="specialties">Specialties / Unique Selling Points</label>
+        <textarea id="specialties" name="specialties" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Portfolio & Media -->
+  <div class="card">
+    <div class="card-head"><span class="num">4</span><h2>Portfolio &amp; Media</h2></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Business Logo <span class="hint">(square format, high resolution)</span></label>
+        <div class="upload-zone" id="logoZone">
+          <p><strong>Click to upload</strong> or drag &amp; drop your logo here</p>
+          <p>PNG or JPG</p>
+          <input type="file" id="logoInput" accept="image/*">
+        </div>
+        <div class="thumbs" id="logoThumb"></div>
+      </div>
+
+      <div class="field">
+        <label>Photo Gallery <span class="hint">(minimum 8 photos recommended for approval)</span></label>
+        <div class="upload-zone" id="photoZone">
+          <p><strong>Click to upload photos</strong> or drag &amp; drop them here</p>
+          <p>You can select multiple images at once - JPG or PNG</p>
+          <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        <div class="photo-count low" id="photoCount">0 photos selected</div>
+        <div class="thumbs" id="photoThumbs"></div>
+      </div>
+
+      <div class="field">
+        <label for="videoLink">Video / Reel Link <span class="hint">(optional)</span></label>
+        <input type="url" id="videoLink" name="videoLink" placeholder="https://">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="instagram">Instagram</label>
+          <input type="text" id="instagram" name="instagram" placeholder="@yourbusiness">
+        </div>
+        <div class="field">
+          <label for="facebook">Facebook</label>
+          <input type="text" id="facebook" name="facebook">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="tiktok">TikTok</label>
+          <input type="text" id="tiktok" name="tiktok">
+        </div>
+        <div class="field">
+          <label for="otherSocial">Other Social / Review Profile <span class="hint">(Google, The Knot, etc.)</span></label>
+          <input type="text" id="otherSocial" name="otherSocial">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Plan Selection -->
+  <div class="card">
+    <div class="card-head"><span class="num">5</span><h2>Plan Selection</h2></div>
+    <div class="card-body">
+      <p class="card-note">All plans are currently free to join during our early-access period.</p>
+      <div class="plan-options" id="planOptions">
+        <label class="plan" data-plan="Essentials">
+          <input type="radio" name="plan" value="Essentials">
+          <div class="plan-name">Essentials</div>
+          <div class="plan-price">Free (Early Access)</div>
+          <div class="plan-desc">Full profile, unlimited photos, search visibility, direct inquiries.</div>
+        </label>
+        <label class="plan" data-plan="Featured">
+          <input type="radio" name="plan" value="Featured">
+          <div class="plan-name">Featured</div>
+          <div class="plan-price">Free (Early Access)</div>
+          <div class="plan-desc">Featured badge, priority placement, custom website, AI voice &amp; chat agents.</div>
+        </label>
+        <label class="plan" data-plan="Growth+">
+          <input type="radio" name="plan" value="Growth+">
+          <div class="plan-name">Growth+</div>
+          <div class="plan-price">Free (Early Access)</div>
+          <div class="plan-desc">Everything in Featured, plus monthly SEO and managed paid ads.</div>
+        </label>
+      </div>
+      <div class="row" style="margin-top:20px;">
+        <div class="field">
+          <label for="billingName">Billing Contact Name</label>
+          <input type="text" id="billingName" name="billingName">
+        </div>
+        <div class="field">
+          <label for="billingEmail">Billing Contact Email <span class="hint">(for future updates once paid plans launch)</span></label>
+          <input type="email" id="billingEmail" name="billingEmail">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Agreement & Signature -->
+  <div class="card">
+    <div class="card-head"><span class="num">6</span><h2>Agreement &amp; Signature</h2></div>
+    <div class="card-body">
+      <div class="agree-row">
+        <input type="checkbox" id="agree" required>
+        <label for="agree">I confirm the information provided is accurate and I agree to Iventora's Terms &amp; Conditions and Privacy Policy (available at iventora.com).</label>
+      </div>
+      <div class="err" id="agreeErr" style="margin:-10px 0 16px;">Please agree to the Terms &amp; Conditions to continue.</div>
+      <div class="row">
+        <div class="field" data-required>
+          <label for="signature">Signature <span class="hint">(type your full name)</span></label>
+          <input type="text" id="signature" name="signature" required>
+          <div class="err">Please type your name to sign.</div>
+        </div>
+        <div class="field">
+          <label for="signDate">Date</label>
+          <input type="date" id="signDate" name="signDate">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="printedName">Printed Name</label>
+          <input type="text" id="printedName" name="printedName">
+        </div>
+        <div class="field">
+          <label for="signTitle">Title</label>
+          <input type="text" id="signTitle" name="signTitle">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-bar">
+    <span class="submit-hint">Our vendor success team typically reviews applications within 2-3 business days.</span>
+    <button type="submit" class="submit">Submit Application</button>
+  </div>
+</form>
+</div>
+
+<div class="success-screen" id="successScreen">
+  <div class="check-circle">OK</div>
+  <h2>Application Received</h2>
+  <p>Thanks for applying to join Iventora! Here's a summary of what you submitted. Our vendor success team will follow up by email within 2-3 business days.</p>
+  <div class="summary-box" id="summaryBox"></div>
+  <div class="success-actions">
+    <button class="btn-secondary" id="downloadBtn">Download Submission (.json)</button>
+    <button class="btn-secondary" id="newAppBtn">Start Another Application</button>
+  </div>
+</div>
+
+<footer>Iventora Events &nbsp;*&nbsp; info@Iventora.com &nbsp;*&nbsp; (614) 615-9145 &nbsp;*&nbsp; iventora.com</footer>
+</div>
+
+<script>
+(function(){
+  // ============================================================
+  // GO HIGHLEVEL CONNECTION
+  // ============================================================
+  // 1. In GHL: Automation > Workflows > Create Workflow > Add Trigger
+  //    > "Inbound Webhook" (Premium trigger). Save, then copy the
+  //    generated webhook URL and paste it below.
+  // 2. In that same workflow, send a test submission from this form
+  //    (fill it out once and click Submit) so GHL captures sample
+  //    fields, then add a "Create/Update Contact" action and map
+  //    email/phone plus any custom fields you want (business name,
+  //    categories, plan, etc.) from the sample payload.
+  // 3. TO ROUTE INTO A SPECIFIC PIPELINE: add a "Create Opportunity"
+  //    action right after the Contact action. Pipeline and Stage are
+  //    chosen from dropdowns inside that action (GHL doesn't accept
+  //    them from the webhook payload) - pick your target pipeline/
+  //    stage there, then map Opportunity Name -> {{opportunityName}}
+  //    and Opportunity Source -> {{leadSource}} from the sample data,
+  //    and set Contact to the one created in step 2.
+  // 4. Publish the workflow.
+  //
+  // NOTE ON PHOTOS: webhooks carry JSON, not binary files, so the
+  // actual photo/logo files are NOT sent to GHL by this integration
+  // - only their filenames and a count. Vendors' photos stay on this
+  // page (viewable + downloadable via "Download Submission"). If you
+  // want photos to land directly in the vendor's GHL contact record,
+  // add a native "File Upload" custom field to a GHL form and link
+  // vendors to it as a second step, or ask us to wire up a file-
+  // storage integration.
+  // ============================================================
+  const GHL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/pNcYP9dJTQleO8dCQMdl/webhook-trigger/690e6b7f-251b-493d-b5cc-7053fd2ad26c";
+
+  // In-memory state (no localStorage per platform restrictions)
+  let logoFile = null;
+  let photoFiles = [];
+
+  const $ = (id) => document.getElementById(id);
+
+  // Word counters
+  function countWords(str){
+    return str.trim().length ? str.trim().split(/\s+/).length : 0;
+  }
+  function bindCounter(inputId, counterId, opts){
+    const el = $(inputId), counter = $(counterId);
+    el.addEventListener('input', () => {
+      const words = countWords(el.value);
+      let label = words + ' word' + (words === 1 ? '' : 's');
+      counter.textContent = label;
+      counter.classList.remove('ok','warn');
+      if(opts && opts.min){
+        if(words >= opts.min && (!opts.max || words <= opts.max)) counter.classList.add('ok');
+        else if(words > 0) counter.classList.add('warn');
+      }
+    });
+  }
+  bindCounter('tagline','taglineCounter',{max:10});
+  bindCounter('description','descCounter',{min:150,max:300});
+
+  // Plan selection visual state
+  document.querySelectorAll('.plan').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.plan').forEach(x => x.classList.remove('selected'));
+      p.classList.add('selected');
+      p.querySelector('input').checked = true;
+    });
+  });
+
+  // Generic upload zone wiring
+  function wireZone(zoneId, inputId, onFiles){
+    const zone = $(zoneId), input = $(inputId);
+    zone.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => onFiles(Array.from(input.files)));
+    ['dragenter','dragover'].forEach(evt => zone.addEventListener(evt, (e) => {
+      e.preventDefault(); zone.classList.add('drag');
+    }));
+    ['dragleave','drop'].forEach(evt => zone.addEventListener(evt, (e) => {
+      e.preventDefault(); zone.classList.remove('drag');
+    }));
+    zone.addEventListener('drop', (e) => {
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      onFiles(files);
+    });
+  }
+
+  function readAsDataURL(file){
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Logo upload
+  wireZone('logoZone','logoInput', async (files) => {
+    if(!files.length) return;
+    logoFile = files[0];
+    const dataUrl = await readAsDataURL(logoFile);
+    $('logoThumb').innerHTML = `
+      <div class="thumb logo">
+        <img src="${dataUrl}" alt="Logo preview">
+        <button type="button" class="rm" aria-label="Remove logo">x</button>
+      </div>`;
+    $('logoThumb').querySelector('.rm').addEventListener('click', () => {
+      logoFile = null;
+      $('logoThumb').innerHTML = '';
+      $('logoInput').value = '';
+    });
+  });
+
+  // Photo gallery upload
+  function updatePhotoCount(){
+    const countEl = $('photoCount');
+    countEl.textContent = photoFiles.length + ' photo' + (photoFiles.length === 1 ? '' : 's') + ' selected' + (photoFiles.length < 8 ? ' (minimum 8 recommended)' : '');
+    countEl.classList.toggle('low', photoFiles.length < 8);
+    countEl.classList.toggle('good', photoFiles.length >= 8);
+  }
+
+  async function renderPhotoThumbs(){
+    const wrap = $('photoThumbs');
+    wrap.innerHTML = '';
+    for(let i = 0; i < photoFiles.length; i++){
+      const dataUrl = await readAsDataURL(photoFiles[i]);
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.innerHTML = `<img src="${dataUrl}" alt="Uploaded photo ${i+1}"><button type="button" class="rm" data-idx="${i}" aria-label="Remove photo">x</button>`;
+      wrap.appendChild(div);
+    }
+    wrap.querySelectorAll('.rm').forEach(btn => {
+      btn.addEventListener('click', () => {
+        photoFiles.splice(Number(btn.dataset.idx), 1);
+        updatePhotoCount();
+        renderPhotoThumbs();
+      });
+    });
+  }
+
+  wireZone('photoZone','photoInput', (files) => {
+    photoFiles = photoFiles.concat(files);
+    updatePhotoCount();
+    renderPhotoThumbs();
+  });
+
+  // Default date = today
+  $('signDate').valueAsDate = new Date();
+
+  // Validation + submit
+  const form = $('vendorForm');
+
+  function setFieldError(el, hasError){
+    const field = el.closest('.field');
+    if(field) field.classList.toggle('error', hasError);
+  }
+
+  // Fire-and-forget POST to the GHL Inbound Webhook. Uses no-cors so the
+  // browser will still deliver the request even though GHL's response
+  // can't be read back (cross-origin). Check the workflow's execution
+  // log in GHL to confirm delivery.
+  async function sendToGHL(payload){
+    if(!GHL_WEBHOOK_URL || GHL_WEBHOOK_URL.indexOf('PASTE_YOUR') === 0){
+      return 'not_configured';
+    }
+    try{
+      await fetch(GHL_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return 'sent';
+    }catch(err){
+      console.error('GHL webhook error:', err);
+      return 'failed';
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    // Required text/email/tel fields
+    form.querySelectorAll('.field[data-required] input, .field[data-required] textarea').forEach(el => {
+      const ok = el.type === 'email' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value) : el.value.trim().length > 0;
+      setFieldError(el, !ok);
+      if(!ok) valid = false;
+    });
+
+    // Category checkboxes
+    const anyCategory = form.querySelectorAll('input[name="category"]:checked').length > 0;
+    $('categoryErr').style.display = anyCategory ? 'none' : 'block';
+    if(!anyCategory) valid = false;
+
+    // Agreement checkbox
+    const agreed = $('agree').checked;
+    $('agreeErr').style.display = agreed ? 'none' : 'block';
+    if(!agreed) valid = false;
+
+    if(!valid){
+      const firstError = form.querySelector('.field.error, #categoryErr[style*="block"], #agreeErr[style*="block"]');
+      if(firstError) firstError.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+
+    // Build summary
+    const categories = Array.from(form.querySelectorAll('input[name="category"]:checked')).map(c => c.value);
+    const locations = Array.from(form.querySelectorAll('input[name="location"]:checked')).map(c => c.value);
+    const plan = (form.querySelector('input[name="plan"]:checked') || {}).value || 'Not selected';
+
+    const submission = {
+      // Convenience fields for mapping into a GHL "Create Opportunity"
+      // action - the target Pipeline and Stage are picked from a dropdown
+      // inside that action in GHL itself (not settable from the webhook),
+      // but these give you ready-made values to map onto Opportunity Name
+      // and Opportunity Source.
+      opportunityName: ($('bizName').value || 'New Vendor') + ' - Vendor Application',
+      leadSource: 'Iventora Vendor Intake Form',
+      businessName: $('bizName').value,
+      dba: $('dba').value,
+      address: $('address').value,
+      cityState: $('cityState').value,
+      website: $('website').value,
+      contactName: $('contactName').value,
+      email: $('email').value,
+      phone: $('phone').value,
+      preferredContact: $('contactMethod').value,
+      categories, locations,
+      serviceRadius: $('radius').value,
+      languages: $('languages').value,
+      tagline: $('tagline').value,
+      description: $('description').value,
+      specialties: $('specialties').value,
+      logo: logoFile ? logoFile.name : null,
+      photos: photoFiles.map(f => f.name),
+      videoLink: $('videoLink').value,
+      instagram: $('instagram').value,
+      facebook: $('facebook').value,
+      tiktok: $('tiktok').value,
+      otherSocial: $('otherSocial').value,
+      plan,
+      billingName: $('billingName').value,
+      billingEmail: $('billingEmail').value,
+      signature: $('signature').value,
+      signDate: $('signDate').value,
+      printedName: $('printedName').value,
+      title: $('signTitle').value,
+      submittedAt: new Date().toISOString()
+    };
+
+    // Send text/checkbox data to GHL (photo/logo binaries are not sent -
+    // see the GO HIGHLEVEL CONNECTION note at the top of this script).
+    const submitBtn = form.querySelector('button.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    const ghlStatus = await sendToGHL(submission);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Application';
+
+    let ghlNote = '';
+    if(ghlStatus === 'sent'){
+      ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM (check the workflow log to confirm it landed)</div>`;
+    } else if(ghlStatus === 'failed'){
+      ghlNote = `<div style="color:var(--danger);font-weight:700;">WARNING: Could not reach the GHL webhook - the info below was captured locally, but wasn't sent to your CRM.</div>`;
+    } else {
+      ghlNote = `<div style="color:var(--text-soft);font-style:italic;">GHL webhook not configured yet - showing local summary only.</div>`;
+    }
+
+    $('summaryBox').innerHTML = `
+      <div><b>Business:</b> ${submission.businessName}</div>
+      <div><b>Contact:</b> ${submission.contactName} - ${submission.email}</div>
+      <div><b>Categories:</b> ${categories.join(', ') || '-'}</div>
+      <div><b>Service Areas:</b> ${locations.join(', ') || '-'}</div>
+      <div><b>Plan:</b> ${plan}</div>
+      <div><b>Photos Uploaded:</b> ${photoFiles.length}</div>
+      <div><b>Logo Uploaded:</b> ${logoFile ? 'Yes' : 'No'}</div>
+      <div style="margin-top:10px;">${ghlNote}</div>
+    `;
+
+    $('downloadBtn').onclick = () => {
+      const blob = new Blob([JSON.stringify(submission, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (submission.businessName || 'iventora-vendor-application').replace(/\s+/g,'-').toLowerCase() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    $('formWrap').classList.add('hidden');
+    $('successScreen').classList.add('show');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  $('newAppBtn').addEventListener('click', () => {
+    form.reset();
+    logoFile = null;
+    photoFiles = [];
+    $('logoThumb').innerHTML = '';
+    $('photoThumbs').innerHTML = '';
+    updatePhotoCount();
+    document.querySelectorAll('.plan').forEach(p => p.classList.remove('selected'));
+    document.querySelectorAll('.field.error').forEach(f => f.classList.remove('error'));
+    $('signDate').valueAsDate = new Date();
+    $('successScreen').classList.remove('show');
+    $('formWrap').classList.remove('hidden');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  updatePhotoCount();
+})();
+</script>
+
+</body>
+</html>
