@@ -1104,7 +1104,10 @@
     let lastQuery = '';
     async function fetchSuggestions(query){
       try{
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en`;
+        // Iventora is US-only, so nudge (not restrict) ranking toward the
+        // continental US - otherwise short queries like "350 Fifth Ave"
+        // can surface Canadian/international matches above US ones.
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en&lat=39.8283&lon=-98.5795&zoom=4`;
         const res = await fetch(url);
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
