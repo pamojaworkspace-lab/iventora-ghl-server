@@ -198,6 +198,65 @@ app.get("/apply", (req, res) => {
     res.send(readFileSync(new URL("./vendor-form-ascii-full.html", import.meta.url), "utf8"));
 });
 
+// Plain REST endpoint used by the vendor intake form itself. Bypasses the
+// old GHL "Inbound Webhook" trigger entirely (that trigger was orphaned and
+// silently dropped every submission) - this calls GHL's real Contacts and
+// Opportunities API directly using the same Private Integration Token the
+// MCP tools above use, so every submission reliably lands as a contact +
+// opportunity in the Iventora Vendor Onboarding / New Lead stage.
+const VENDOR_PIPELINE_ID = "uukK0zDBwrFccyRAbM3Z";
+const VENDOR_NEW_LEAD_STAGE_ID = "36fa3f6a-2ab8-43fe-b6f9-76edd8ba94fc";
+
+app.post("/submit-application", async (req, res) => {
+    try {
+        const body = req.body || {};
+        const businessName = body.businessName || body.legalBusinessName;
+        const email = body.email;
+        const phone = body.phone;
+
+        if (!businessName) {
+            return res.status(400).json({ ok: false, error: "businessName is required" });
+        }
+        if (!email && !phone) {
+            return res.status(400).json({ ok: false, error: "email or phone is required" });
+        }
+
+        const contactNameParts = (body.contactName || businessName).trim().split(/\s+/);
+        const firstName = contactNameParts[0];
+        const lastName = contactNameParts.slice(1).join(" ") || undefined;
+
+        const contact = await upsertContact({
+            firstName,
+            lastName,
+            email,
+            phone,
+            companyName: businessName,
+            website: body.website,
+            address1: body.address1,
+            city: body.city,
+            state: body.state,
+            postalCode: body.postalCode,
+            tags: ["vendor-application"].concat(body.categories || []),
+            source: "Iventora Vendor Intake Form",
+        });
+
+        const opp = await createOpportunity({
+            contactId: contact.id,
+            pipelineId: VENDOR_PIPELINE_ID,
+            pipelineStageId: VENDOR_NEW_LEAD_STAGE_ID,
+            name: businessName + " - Vendor Application",
+        });
+
+        res.json({ ok: true, contactId: contact.id, opportunityId: opp.id });
+    } catch (err) {
+        console.error("submit-application error:", err);
+        res.status(err.status || 500).json({
+            ok: false,
+            error: err.message || "Failed to submit application to GHL",
+        });
+    }
+});
+
 app.post("/mcp", async (req, res) => {
     try {
           const server = buildServer();

@@ -530,33 +530,22 @@
   // ============================================================
   // GO HIGHLEVEL CONNECTION
   // ============================================================
-  // 1. In GHL: Automation > Workflows > Create Workflow > Add Trigger
-  //    > "Inbound Webhook" (Premium trigger). Save, then copy the
-  //    generated webhook URL and paste it below.
-  // 2. In that same workflow, send a test submission from this form
-  //    (fill it out once and click Submit) so GHL captures sample
-  //    fields, then add a "Create/Update Contact" action and map
-  //    email/phone plus any custom fields you want (business name,
-  //    categories, plan, etc.) from the sample payload.
-  // 3. TO ROUTE INTO A SPECIFIC PIPELINE: add a "Create Opportunity"
-  //    action right after the Contact action. Pipeline and Stage are
-  //    chosen from dropdowns inside that action (GHL doesn't accept
-  //    them from the webhook payload) - pick your target pipeline/
-  //    stage there, then map Opportunity Name -> {{opportunityName}}
-  //    and Opportunity Source -> {{leadSource}} from the sample data,
-  //    and set Contact to the one created in step 2.
-  // 4. Publish the workflow.
+  // Submissions are sent directly to this app's own /submit-application
+  // endpoint (same-origin), which calls GoHighLevel's real Contacts +
+  // Opportunities API server-side using a Private Integration Token.
+  // That endpoint upserts the vendor as a Contact and creates an
+  // Opportunity for them in the Iventora Vendor Onboarding pipeline's
+  // New Lead stage - no GHL webhook trigger is involved.
   //
-  // NOTE ON PHOTOS: webhooks carry JSON, not binary files, so the
-  // actual photo/logo files are NOT sent to GHL by this integration
-  // - only their filenames and a count. Vendors' photos stay on this
+  // NOTE ON PHOTOS: only text/checkbox fields are sent to GHL - the
+  // actual photo/logo files are NOT sent. Vendors' photos stay on this
   // page (viewable + downloadable via "Download Submission"). If you
   // want photos to land directly in the vendor's GHL contact record,
   // add a native "File Upload" custom field to a GHL form and link
   // vendors to it as a second step, or ask us to wire up a file-
   // storage integration.
   // ============================================================
-  const GHL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/pNcYP9dJTQleO8dCQMdl/webhook-trigger/690e6b7f-251b-493d-b5cc-7053fd2ad26c";
+  const SUBMIT_ENDPOINT = "/submit-application";
 
   // In-memory state (no localStorage per platform restrictions)
   let logoFile = null;
@@ -679,25 +668,26 @@
     if(field) field.classList.toggle('error', hasError);
   }
 
-  // Fire-and-forget POST to the GHL Inbound Webhook. Uses no-cors so the
-  // browser will still deliver the request even though GHL's response
-  // can't be read back (cross-origin). Check the workflow's execution
-  // log in GHL to confirm delivery.
+  // Same-origin POST to this app's /submit-application endpoint, which
+  // creates the Contact + Opportunity in GHL server-side and returns a
+  // real JSON result we can read (unlike the old no-cors webhook call).
   async function sendToGHL(payload){
-    if(!GHL_WEBHOOK_URL || GHL_WEBHOOK_URL.indexOf('PASTE_YOUR') === 0){
-      return 'not_configured';
-    }
     try{
-      await fetch(GHL_WEBHOOK_URL, {
+      const res = await fetch(SUBMIT_ENDPOINT, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      return 'sent';
+      let data = {};
+      try{ data = await res.json(); }catch(e){ /* non-JSON response */ }
+      if(res.ok && data.ok){
+        return { status: 'sent', contactId: data.contactId, opportunityId: data.opportunityId };
+      }
+      console.error('GHL submit-application error:', data.error || res.status);
+      return { status: 'failed', error: data.error || ('HTTP ' + res.status) };
     }catch(err){
-      console.error('GHL webhook error:', err);
-      return 'failed';
+      console.error('GHL submit-application network error:', err);
+      return { status: 'failed', error: err.message };
     }
   }
 
@@ -733,6 +723,15 @@
     const locations = Array.from(form.querySelectorAll('input[name="location"]:checked')).map(c => c.value);
     const plan = (form.querySelector('input[name="plan"]:checked') || {}).value || 'Not selected';
 
+    // Best-effort split of the single "City, ST 12345" field into the
+    // separate city/state/postalCode fields GHL's Contact API expects.
+    const cityStateRaw = $('cityState').value || '';
+    const cityStateParts = cityStateRaw.split(',').map(s => s.trim()).filter(Boolean);
+    const cityPart = cityStateParts[0] || '';
+    const stateZipParts = (cityStateParts[1] || '').trim().split(/\s+/).filter(Boolean);
+    const statePart = stateZipParts[0] || '';
+    const zipPart = stateZipParts.slice(1).join(' ') || '';
+
     const submission = {
       // Convenience fields for mapping into a GHL "Create Opportunity"
       // action - the target Pipeline and Stage are picked from a dropdown
@@ -745,6 +744,11 @@
       dba: $('dba').value,
       address: $('address').value,
       cityState: $('cityState').value,
+      // Fields consumed by /submit-application (GHL Contact API shape)
+      address1: $('address').value,
+      city: cityPart,
+      state: statePart,
+      postalCode: zipPart,
       website: $('website').value,
       contactName: $('contactName').value,
       email: $('email').value,
@@ -778,17 +782,15 @@
     const submitBtn = form.querySelector('button.submit');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    const ghlStatus = await sendToGHL(submission);
+    const ghlResult = await sendToGHL(submission);
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Application';
 
     let ghlNote = '';
-    if(ghlStatus === 'sent'){
-      ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM (check the workflow log to confirm it landed)</div>`;
-    } else if(ghlStatus === 'failed'){
-      ghlNote = `<div style="color:var(--danger);font-weight:700;">WARNING: Could not reach the GHL webhook - the info below was captured locally, but wasn't sent to your CRM.</div>`;
+    if(ghlResult.status === 'sent'){
+      ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM - contact and opportunity created.</div>`;
     } else {
-      ghlNote = `<div style="color:var(--text-soft);font-style:italic;">GHL webhook not configured yet - showing local summary only.</div>`;
+      ghlNote = `<div style="color:var(--danger);font-weight:700;">WARNING: Could not send to GHL (${ghlResult.error || 'unknown error'}) - the info below was captured locally, but wasn't sent to your CRM.</div>`;
     }
 
     $('summaryBox').innerHTML = `
