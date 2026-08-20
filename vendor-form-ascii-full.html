@@ -318,7 +318,7 @@
 
 <div class="banner">
   <div class="inner">
-    <span><strong>No business license, insurance, or certifications required to join.</strong> All plans are currently free during our early-access period.</span>
+    <span><strong>All plans are currently free</strong> during our early-access period.</span>
   </div>
 </div>
 
@@ -1210,22 +1210,50 @@
     }
 
     let lastQuery = '';
+    // Cancel any in-flight request when a new one starts, instead of just
+    // relying on the debounce timer. Without this, typing a full address
+    // at a normal pace fires several overlapping fetches to the free
+    // Photon API; if one of those responses is slow (or Photon is
+    // rate-limiting), the browser's per-origin connection cap can queue
+    // requests up behind it and the "Searching..." state never resolves -
+    // which is exactly what made this look "stuck" and never populate.
+    // A hard 6s timeout is a second safety net so a hung request can't
+    // leave the box stuck forever even on the very first keystroke.
+    let currentController = null;
     async function fetchSuggestions(query){
+      if(currentController) currentController.abort();
+      const controller = new AbortController();
+      controller.timedOut = false;
+      currentController = controller;
+      const timeoutId = setTimeout(() => { controller.timedOut = true; controller.abort(); }, 6000);
       try{
         // Iventora is US-only, so nudge (not restrict) ranking toward the
         // continental US - otherwise short queries like "350 Fifth Ave"
         // can surface Canadian/international matches above US ones.
         const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en&lat=39.8283&lon=-98.5795&zoom=8`;
-        const res = await fetch(url);
+        const res = await fetch(url, {signal: controller.signal});
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
+        clearTimeout(timeoutId);
         // If the field changed again while this request was in flight,
         // drop the stale response instead of overwriting newer results.
         if(query !== lastQuery) return;
         renderResults((data.features || []).filter(f => f && f.properties));
       }catch(err){
+        clearTimeout(timeoutId);
+        if(err.name === 'AbortError'){
+          // Either superseded by a newer keystroke (silent - the newer
+          // request owns the UI now) or hit the 6s safety timeout, in
+          // which case let the vendor know instead of leaving them
+          // staring at "Searching..." forever.
+          if(controller.timedOut && query === lastQuery){
+            list.innerHTML = '<div class="autocomplete-empty">Search is taking a while - you can keep typing or enter the address manually.</div>';
+            list.classList.add('show');
+          }
+          return;
+        }
         console.error('Address autocomplete error:', err);
-        closeList();
+        if(query === lastQuery) closeList();
       }
     }
 
