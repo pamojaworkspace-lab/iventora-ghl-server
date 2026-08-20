@@ -232,6 +232,21 @@
   .photo-count{margin-top:10px;font-size:13px;font-weight:600;}
   .photo-count.low{color:var(--danger);}
   .photo-count.good{color:var(--success);}
+  .video-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .video-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg-tint);
+  }
+  .video-item .vi-icon{font-size:18px;flex-shrink:0;}
+  .video-item .vi-info{flex:1;min-width:0;}
+  .video-item .vi-name{font-size:13px;font-weight:700;color:var(--plum);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .video-item .vi-meta{font-size:11.5px;color:var(--text-soft);}
+  .video-item .rm{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    background:rgba(0,0,0,.5);color:#fff;border:none;font-size:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .video-item .rm:hover{background:var(--danger);}
   .agree-row{
     display:flex;gap:10px;align-items:flex-start;
     background:var(--bg-tint);border-radius:8px;padding:12px 14px;margin-bottom:18px;
@@ -770,7 +785,18 @@
       </div>
 
       <div class="field">
-        <label for="videoLink">Video / Reel Link <span class="hint">(optional)</span></label>
+        <label>Venue Video <span class="hint">(optional - walkthrough, trailer, or promo reel)</span></label>
+        <div class="upload-zone" id="videoZone">
+          <p><strong>Click to upload a video</strong> or drag &amp; drop it here</p>
+          <p>MP4, MOV, or similar - up to 25MB per file, max 3 videos</p>
+          <input type="file" id="videoInput" accept="video/*" multiple>
+        </div>
+        <div class="err" id="videoErr" style="display:none;"></div>
+        <div class="video-list" id="videoList"></div>
+      </div>
+
+      <div class="field">
+        <label for="videoLink">Video / Reel Link <span class="hint">(optional - or paste a YouTube/Vimeo link instead)</span></label>
         <input type="url" id="videoLink" name="videoLink" placeholder="https://">
       </div>
 
@@ -913,6 +939,9 @@
   // In-memory state (no localStorage per platform restrictions)
   let logoFile = null;
   let photoFiles = [];
+  let videoFiles = [];
+  const MAX_VIDEOS = 3;
+  const MAX_VIDEO_SIZE = 25 * 1024 * 1024; // 25MB per file - matches GHL Media Library's cap
 
   const $ = (id) => document.getElementById(id);
 
@@ -945,9 +974,12 @@
     });
   });
 
-  // Generic upload zone wiring
-  function wireZone(zoneId, inputId, onFiles){
+  // Generic upload zone wiring. filterFn decides which dropped files are
+  // accepted (defaults to images, since that's what logo/photo zones need);
+  // pass a different predicate (e.g. video/*) to reuse this for other zones.
+  function wireZone(zoneId, inputId, onFiles, filterFn){
     const zone = $(zoneId), input = $(inputId);
+    const accept = filterFn || (f => f.type.startsWith('image/'));
     zone.addEventListener('click', () => input.click());
     input.addEventListener('change', () => onFiles(Array.from(input.files)));
     ['dragenter','dragover'].forEach(evt => zone.addEventListener(evt, (e) => {
@@ -957,7 +989,7 @@
       e.preventDefault(); zone.classList.remove('drag');
     }));
     zone.addEventListener('drop', (e) => {
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      const files = Array.from(e.dataTransfer.files).filter(accept);
       onFiles(files);
     });
   }
@@ -1019,6 +1051,68 @@
     updatePhotoCount();
     renderPhotoThumbs();
   });
+
+  // Venue video upload (walkthrough / trailer / promo reel). Files are
+  // uploaded straight to the GHL Media Library like logo/photos, so we
+  // just enforce the same limits the server (and GHL) already enforce -
+  // 25MB per file - plus a friendlier cap of 3 videos so vendors upload
+  // short clips rather than raw, full-length footage.
+  function formatFileSize(bytes){
+    if(bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if(bytes >= 1024) return Math.round(bytes / 1024) + ' KB';
+    return bytes + ' B';
+  }
+
+  function showVideoErr(msg){
+    const el = $('videoErr');
+    if(!msg){ el.style.display = 'none'; el.textContent = ''; return; }
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function renderVideoList(){
+    const wrap = $('videoList');
+    wrap.innerHTML = videoFiles.map((f, i) => `
+      <div class="video-item">
+        <span class="vi-icon">&#127916;</span>
+        <div class="vi-info">
+          <div class="vi-name">${f.name}</div>
+          <div class="vi-meta">${formatFileSize(f.size)}</div>
+        </div>
+        <button type="button" class="rm" data-idx="${i}" aria-label="Remove video">x</button>
+      </div>`).join('');
+    wrap.querySelectorAll('.rm').forEach(btn => {
+      btn.addEventListener('click', () => {
+        videoFiles.splice(Number(btn.dataset.idx), 1);
+        renderVideoList();
+      });
+    });
+  }
+
+  function handleVideoFiles(files){
+    if(!files.length) return;
+    let rejected = [];
+    for(const f of files){
+      if(!f.type.startsWith('video/')){
+        rejected.push(`${f.name} isn't a video file.`);
+        continue;
+      }
+      if(f.size > MAX_VIDEO_SIZE){
+        rejected.push(`${f.name} is over the 25MB limit.`);
+        continue;
+      }
+      if(videoFiles.length >= MAX_VIDEOS){
+        rejected.push(`${f.name} wasn't added - maximum ${MAX_VIDEOS} videos.`);
+        continue;
+      }
+      videoFiles.push(f);
+    }
+    showVideoErr(rejected.length ? rejected.join(' ') : '');
+    renderVideoList();
+    $('videoInput').value = '';
+  }
+
+  wireZone('videoZone','videoInput', handleVideoFiles, (f) => f.type.startsWith('video/'));
 
   // ------------------------------------------------------------
   // Address autocomplete (Photon by komoot - free, no API key needed).
@@ -1349,6 +1443,7 @@
       // the plain "logo"/"photos" field names multer expects server-side.
       logoName: logoFile ? logoFile.name : null,
       photoNames: photoFiles.map(f => f.name),
+      videoNames: videoFiles.map(f => f.name),
       videoLink: $('videoLink').value,
       instagram: $('instagram').value,
       facebook: $('facebook').value,
@@ -1374,6 +1469,7 @@
     });
     if(logoFile) formData.append('logo', logoFile, logoFile.name);
     photoFiles.forEach(f => formData.append('photos', f, f.name));
+    videoFiles.forEach(f => formData.append('videos', f, f.name));
 
     const submitBtn = form.querySelector('button.submit');
     submitBtn.disabled = true;
@@ -1388,8 +1484,8 @@
       let fileNote = '';
       if(totalFiles > 0){
         fileNote = ghlResult.filesFailed > 0
-          ? ` ${ghlResult.filesUploaded} of ${totalFiles} photo/logo file(s) uploaded (${ghlResult.filesFailed} failed).`
-          : ` ${ghlResult.filesUploaded} photo/logo file(s) uploaded.`;
+          ? ` ${ghlResult.filesUploaded} of ${totalFiles} photo/logo/video file(s) uploaded (${ghlResult.filesFailed} failed).`
+          : ` ${ghlResult.filesUploaded} photo/logo/video file(s) uploaded.`;
       }
       ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM - contact and opportunity created.${fileNote}</div>`;
     } else {
@@ -1404,6 +1500,7 @@
       <div><b>Amenities:</b> ${amenities.join(', ') || '-'}</div>
       <div><b>Plan:</b> ${plan}</div>
       <div><b>Photos Uploaded:</b> ${photoFiles.length}</div>
+      <div><b>Videos Uploaded:</b> ${videoFiles.length}</div>
       <div><b>Logo Uploaded:</b> ${logoFile ? 'Yes' : 'No'}</div>
       <div style="margin-top:10px;">${ghlNote}</div>
     `;
@@ -1429,6 +1526,8 @@
     form.reset();
     logoFile = null;
     photoFiles = [];
+    videoFiles = [];
+    showVideoErr('');
     otherAmenities = [];
     otherAmenitiesWrap.style.display = 'none';
     otherAmenityChips.innerHTML = '';
@@ -1436,6 +1535,7 @@
     updateAmenityCounts();
     $('logoThumb').innerHTML = '';
     $('photoThumbs').innerHTML = '';
+    $('videoList').innerHTML = '';
     updatePhotoCount();
     document.querySelectorAll('.plan').forEach(p => p.classList.remove('selected'));
     document.querySelectorAll('.field.error').forEach(f => f.classList.remove('error'));

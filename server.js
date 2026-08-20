@@ -239,6 +239,7 @@ app.post(
     upload.fields([
         { name: "logo", maxCount: 1 },
         { name: "photos", maxCount: 20 },
+        { name: "videos", maxCount: 3 },
     ]),
     async (req, res) => {
         try {
@@ -287,14 +288,16 @@ app.post(
                 name: businessName + " - Vendor Application",
             });
 
-            // Upload logo + photos to the GHL Media Library, then link them
-            // all in a note on the contact so they're easy to find and
-            // review from the contact record.
+            // Upload logo + photos + videos (venue walkthrough, trailer, etc.)
+            // to the GHL Media Library, then link them all in a note on the
+            // contact so they're easy to find and review from the record.
             const logoFile = req.files?.logo?.[0];
             const photoFiles = req.files?.photos || [];
+            const videoFiles = req.files?.videos || [];
             const uploadJobs = [];
             if (logoFile) uploadJobs.push(uploadFileSafe(logoFile, "Logo"));
             for (const f of photoFiles) uploadJobs.push(uploadFileSafe(f, "Photo"));
+            for (const f of videoFiles) uploadJobs.push(uploadFileSafe(f, "Video"));
             const uploadResults = await Promise.all(uploadJobs);
             const uploadedFiles = uploadResults.filter((f) => f.ok);
             const failedFiles = uploadResults.filter((f) => !f.ok);
