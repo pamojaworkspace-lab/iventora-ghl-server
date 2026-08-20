@@ -137,6 +137,26 @@
   }
   .check-item:hover{background:var(--bg-tint);}
   .check-item input{width:16px;height:16px;accent-color:var(--plum);flex-shrink:0;cursor:pointer;}
+  .amenity-dropdown{
+    border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden;
+  }
+  .amenity-dropdown summary{
+    cursor:pointer;list-style:none;padding:12px 14px;font-weight:700;color:var(--plum);
+    background:var(--bg-tint);display:flex;align-items:center;justify-content:space-between;
+    font-size:14px;user-select:none;gap:10px;
+  }
+  .amenity-dropdown summary::-webkit-details-marker{display:none;}
+  .amenity-dropdown summary::after{
+    content:'\25BE';font-size:14px;color:var(--text-soft);transition:transform .15s;flex-shrink:0;
+  }
+  .amenity-dropdown[open] summary::after{transform:rotate(180deg);}
+  .amenity-dropdown summary .s-label{display:flex;align-items:center;gap:8px;}
+  .amenity-dropdown summary .count{
+    font-size:11.5px;font-weight:700;color:#fff;background:var(--gold);border-radius:999px;
+    padding:2px 8px;display:none;
+  }
+  .amenity-dropdown summary .count.show{display:inline-block;}
+  .amenity-dropdown .check-grid{padding:14px;margin:0;}
   .autocomplete-wrap{position:relative;}
   .autocomplete-list{
     position:absolute;top:100%;left:0;right:0;margin-top:4px;
@@ -412,32 +432,305 @@
         <div class="err">Please add a business description.</div>
       </div>
       <div class="field">
-        <label>Amenities <span class="hint">(check all that apply)</span></label>
-        <div class="check-grid" id="amenitiesGrid">
-          <label class="check-item"><input type="checkbox" name="amenity" value="Free Parking Available">Free Parking Available</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Wheelchair Accessible">Wheelchair Accessible</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Licensed & Insured">Licensed &amp; Insured</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Eco-Friendly / Sustainable Practices">Eco-Friendly / Sustainable</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Custom Packages Available">Custom Packages Available</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Payment Plans Offered">Payment Plans Offered</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Bilingual Staff">Bilingual Staff</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Pet-Friendly">Pet-Friendly</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Indoor & Outdoor Options">Indoor &amp; Outdoor Options</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Day-Of Coordination Included">Day-Of Coordination</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Same-Day Availability">Same-Day Availability</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Award-Winning">Award-Winning</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Family-Owned">Family-Owned</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Veteran-Owned">Veteran-Owned</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Woman-Owned">Woman-Owned</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Minority-Owned">Minority-Owned</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="LGBTQ+-Owned">LGBTQ+-Owned</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="On-Site Setup & Breakdown">On-Site Setup &amp; Breakdown</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Delivery Available">Delivery Available</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Rush / Last-Minute Bookings">Rush / Last-Minute Bookings</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Free Consultation">Free Consultation</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Virtual / Remote Services Available">Virtual / Remote Services</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="All-Inclusive Pricing">All-Inclusive Pricing</label>
-          <label class="check-item"><input type="checkbox" name="amenity" value="Referral Discounts">Referral Discounts</label>
+        <label>Amenities <span class="hint">(expand a category and check all that apply)</span></label>
+        <div class="card-note" id="amenitiesSummary" style="margin:0 0 12px;">0 amenities selected</div>
+        <div id="amenitiesSection">
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🏢 Venue Features <span class="count" id="cnt-venue">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Indoor Event Space">Indoor Event Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Event Space">Outdoor Event Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Rooftop">Rooftop</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ballroom">Ballroom</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Banquet Hall">Banquet Hall</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Conference Room">Conference Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Meeting Room">Meeting Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Private Dining Room">Private Dining Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Lounge">Lounge</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Patio">Patio</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Courtyard">Courtyard</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Garden">Garden</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Lawn">Lawn</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Pool Area">Pool Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Beachfront">Beachfront</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Waterfront">Waterfront</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Barn">Barn</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Warehouse">Warehouse</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Studio">Studio</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Theater">Theater</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Church/Religious Space">Church/Religious Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Industrial Space">Industrial Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Historic Venue">Historic Venue</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Luxury Venue">Luxury Venue</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Multi-Room Venue">Multi-Room Venue</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Private Venue">Private Venue</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Open-Air Venue">Open-Air Venue</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Fire Pit">Fire Pit</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Gazebo">Gazebo</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Pavilion">Pavilion</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Tent Area">Tent Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Stage">Outdoor Stage</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Dance Floor">Outdoor Dance Floor</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Seating">Outdoor Seating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Scenic Views">Scenic Views</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Air Conditioning">Air Conditioning</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Heating">Heating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Indoor Climate Control">Indoor Climate Control</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Heaters">Outdoor Heaters</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Fans">Fans</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Covered Outdoor Space">Covered Outdoor Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Weather Protection">Weather Protection</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Backup Generator">Backup Generator</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🪑 Furniture &amp; Setup <span class="count" id="cnt-furniture">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Tables">Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Chairs">Chairs</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cocktail Tables">Cocktail Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bar Tables">Bar Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Lounge Furniture">Lounge Furniture</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Sofas">Sofas</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Couches">Couches</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Benches">Benches</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Chiavari Chairs">Chiavari Chairs</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Folding Chairs">Folding Chairs</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Banquet Tables">Banquet Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Round Tables">Round Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Rectangular Tables">Rectangular Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="High-Top Tables">High-Top Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ceremony Seating">Ceremony Seating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Reception Seating">Reception Seating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Stage">Stage</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Dance Floor">Dance Floor</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Podium">Podium</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Lectern">Lectern</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Linens">Linens</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Tablecloths">Tablecloths</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Napkins">Napkins</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="China">China</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Glassware">Glassware</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Flatware">Flatware</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Serving Equipment">Serving Equipment</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bars">Bars</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Tents">Tents</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Canopies">Canopies</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Portable Restrooms">Portable Restrooms</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Stanchions">Stanchions</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Crowd Control Barriers">Crowd Control Barriers</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wedding Arch">Wedding Arch</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Altar">Altar</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cake Table">Cake Table</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Gift Table">Gift Table</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Guest Book Table">Guest Book Table</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🍽️ Food &amp; Beverage <span class="count" id="cnt-food">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Catering">Catering</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="On-Site Catering">On-Site Catering</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outside Catering Allowed">Outside Catering Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Buffet">Buffet</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Plated Dinner">Plated Dinner</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Family-Style Dining">Family-Style Dining</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Food Stations">Food Stations</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Hors d&#x27;Oeuvres">Hors d&#x27;Oeuvres</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Dessert Station">Dessert Station</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cake Service">Cake Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bar Service">Bar Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Full Bar">Full Bar</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cash Bar">Cash Bar</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Open Bar">Open Bar</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="BYOB Allowed">BYOB Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bartender Service">Bartender Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Coffee/Tea Service">Coffee/Tea Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Kitchen Access">Kitchen Access</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Prep Kitchen">Prep Kitchen</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Refrigerator">Refrigerator</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Freezer">Freezer</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ice Machine">Ice Machine</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Food Preparation Area">Food Preparation Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Bar">Outdoor Bar</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Kitchen">Outdoor Kitchen</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🎤 Audio &amp; Entertainment <span class="count" id="cnt-audio">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Sound System">Sound System</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Professional Speakers">Professional Speakers</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Microphones">Microphones</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wireless Microphones">Wireless Microphones</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="DJ Equipment">DJ Equipment</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="DJ Booth">DJ Booth</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="DJ Services">DJ Services</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Live Music">Live Music</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Live Band">Live Band</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Karaoke">Karaoke</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Projector">Projector</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Projection Screen">Projection Screen</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="LED Screen">LED Screen</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="TV/Monitors">TV/Monitors</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Special Effects">Special Effects</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Fog Machine">Fog Machine</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Photo Booth">Photo Booth</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="360° Photo Booth">360° Photo Booth</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">💡 Lighting <span class="count" id="cnt-lighting">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Indoor Lighting">Indoor Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outdoor Lighting">Outdoor Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Decorative Lighting">Decorative Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="String Lights">String Lights</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Fairy Lights">Fairy Lights</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Chandeliers">Chandeliers</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="LED Lighting">LED Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Uplighting">Uplighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Spotlighting">Spotlighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Stage Lighting">Stage Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Dance Floor Lighting">Dance Floor Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Architectural Lighting">Architectural Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Candle Lighting">Candle Lighting</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Lighting System">Lighting System</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">📶 Technology <span class="count" id="cnt-tech">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wi-Fi">Wi-Fi</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="High-Speed Wi-Fi">High-Speed Wi-Fi</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bluetooth">Bluetooth</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Audio/Visual Equipment">Audio/Visual Equipment</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="HDMI Connections">HDMI Connections</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="USB Charging">USB Charging</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Charging Stations">Charging Stations</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Power Outlets">Power Outlets</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Laptop Connections">Laptop Connections</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Conference Technology">Conference Technology</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Video Conferencing">Video Conferencing</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Presentation Equipment">Presentation Equipment</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Printing">Printing</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Business Center">Business Center</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🅿️ Parking &amp; Transportation <span class="count" id="cnt-parking">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Free Parking">Free Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Paid Parking">Paid Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Private Parking Lot">Private Parking Lot</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Street Parking">Street Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Valet Parking">Valet Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Garage Parking">Garage Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Accessible Parking">Accessible Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Loading Area">Loading Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bus Parking">Bus Parking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Shuttle Service">Shuttle Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Transportation Services">Transportation Services</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Rideshare Pickup Area">Rideshare Pickup Area</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">♿ Accessibility <span class="count" id="cnt-accessibility">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wheelchair Accessible">Wheelchair Accessible</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="ADA Accessible">ADA Accessible</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Accessible Entrance">Accessible Entrance</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Accessible Restrooms">Accessible Restrooms</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Elevator">Elevator</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ramps">Ramps</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ground-Level Access">Ground-Level Access</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Accessible Seating">Accessible Seating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Accessible Stage Access">Accessible Stage Access</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🚻 Guest Facilities <span class="count" id="cnt-guest">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Restrooms">Restrooms</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Private Restrooms">Private Restrooms</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Family Restroom">Family Restroom</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Bridal Suite">Bridal Suite</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Groom Suite">Groom Suite</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Getting-Ready Room">Getting-Ready Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Dressing Room">Dressing Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Coat Check">Coat Check</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Guest Lounge">Guest Lounge</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="VIP Area">VIP Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Green Room">Green Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Break Room">Break Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Changing Room">Changing Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Kids&#x27; Area">Kids&#x27; Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Playground">Playground</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Children&#x27;s Seating">Children&#x27;s Seating</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="High Chairs">High Chairs</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Changing Tables">Changing Tables</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Nursing Room">Nursing Room</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Baby-Friendly">Baby-Friendly</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Childcare Area">Childcare Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Kids&#x27; Activities">Kids&#x27; Activities</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">🧹 Event Services <span class="count" id="cnt-services">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Setup Included">Setup Included</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cleanup Included">Cleanup Included</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Event Staffing">Event Staffing</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Event Coordinator">Event Coordinator</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Event Planner">Event Planner</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Day-of Coordination">Day-of Coordination</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Vendor Coordination">Vendor Coordination</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Furniture Setup">Furniture Setup</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Breakdown Service">Breakdown Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Trash Removal">Trash Removal</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Cleaning Service">Cleaning Service</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Equipment Setup">Equipment Setup</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Equipment Breakdown">Equipment Breakdown</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Security Staff">Security Staff</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Security Cameras">Security Cameras</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="On-Site Manager">On-Site Manager</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Check-In Area">Check-In Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Private Entrance">Private Entrance</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Emergency Exit">Emergency Exit</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="First Aid Station">First Aid Station</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wedding Coordinator">Wedding Coordinator</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Rehearsal Space">Rehearsal Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Wedding Decor">Wedding Decor</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Floral Services">Floral Services</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Photography Area">Photography Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Champagne Toast">Champagne Toast</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Ceremony Space">Ceremony Space</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Reception Space">Reception Space</label>
+            </div>
+          </details>
+          <details class="amenity-dropdown">
+            <summary><span class="s-label">📋 Policies &amp; Special Features <span class="count" id="cnt-policies">0</span></span></summary>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="amenity" value="Pet Friendly">Pet Friendly</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Service Animals Allowed">Service Animals Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Smoking Area">Smoking Area</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Non-Smoking">Non-Smoking</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Alcohol Allowed">Alcohol Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outside Vendors Allowed">Outside Vendors Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outside Decorators Allowed">Outside Decorators Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outside DJs Allowed">Outside DJs Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Outside Entertainment Allowed">Outside Entertainment Allowed</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Flexible Vendor Policy">Flexible Vendor Policy</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Exclusive Vendor Policy">Exclusive Vendor Policy</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Overnight Events">Overnight Events</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Late-Night Events">Late-Night Events</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Same-Day Events">Same-Day Events</label>
+              <label class="check-item"><input type="checkbox" name="amenity" value="Multi-Day Events">Multi-Day Events</label>
+            </div>
+          </details>
+        </div>
+
+        <div class="check-grid" style="margin-top:12px;">
           <label class="check-item"><input type="checkbox" id="amenityOtherToggle">Other <span class="hint">(specify)</span></label>
         </div>
         <div id="otherAmenitiesWrap" style="display:none;">
@@ -853,6 +1146,26 @@
   const otherAmenitiesWrap = $('otherAmenitiesWrap');
   const otherAmenityInput = $('otherAmenityInput');
   const otherAmenityChips = $('otherAmenityChips');
+  const amenitiesSection = $('amenitiesSection');
+  const amenitiesSummary = $('amenitiesSummary');
+
+  // Keeps each category dropdown's badge count, and the overall summary
+  // line, in sync with what's actually checked (plus any custom "Other"
+  // entries) so vendors can see their selections without opening every
+  // category.
+  function updateAmenityCounts(){
+    let total = 0;
+    amenitiesSection.querySelectorAll('.amenity-dropdown').forEach(details => {
+      const n = details.querySelectorAll('input[name="amenity"]:checked').length;
+      total += n;
+      const badge = details.querySelector('.count');
+      badge.textContent = n;
+      badge.classList.toggle('show', n > 0);
+    });
+    total += otherAmenities.length;
+    amenitiesSummary.textContent = total + ' amenit' + (total === 1 ? 'y' : 'ies') + ' selected';
+  }
+  amenitiesSection.addEventListener('change', updateAmenityCounts);
 
   amenityOtherToggle.addEventListener('change', () => {
     otherAmenitiesWrap.style.display = amenityOtherToggle.checked ? 'block' : 'none';
@@ -867,8 +1180,10 @@
       btn.addEventListener('click', () => {
         otherAmenities.splice(Number(btn.dataset.idx), 1);
         renderOtherAmenityChips();
+        updateAmenityCounts();
       });
     });
+    updateAmenityCounts();
   }
 
   function addOtherAmenity(){
@@ -887,6 +1202,7 @@
     }
   });
   $('otherAmenityAddBtn').addEventListener('click', addOtherAmenity);
+  updateAmenityCounts();
 
   // Default date = today
   $('signDate').valueAsDate = new Date();
@@ -1089,6 +1405,8 @@
     otherAmenities = [];
     otherAmenitiesWrap.style.display = 'none';
     otherAmenityChips.innerHTML = '';
+    document.querySelectorAll('.amenity-dropdown').forEach(d => d.open = false);
+    updateAmenityCounts();
     $('logoThumb').innerHTML = '';
     $('photoThumbs').innerHTML = '';
     updatePhotoCount();
