@@ -1057,15 +1057,29 @@
       activeIndex = -1;
     }
 
+    function showLoading(){
+      list.innerHTML = '<div class="autocomplete-empty">Searching...</div>';
+      list.classList.add('show');
+    }
+
     function renderResults(features){
-      currentResults = features;
-      if(!features.length){
+      // Show the most complete matches first (full street number + name)
+      // so a fully-typed address surfaces immediately instead of getting
+      // buried under vaguer place-only results.
+      const sorted = features.slice().sort((a, b) => {
+        const score = (f) => (f.properties.housenumber ? 2 : f.properties.street ? 1 : 0);
+        return score(b) - score(a);
+      });
+      currentResults = sorted;
+      if(!sorted.length){
         list.innerHTML = '<div class="autocomplete-empty">No matches found - you can still type the address manually.</div>';
         list.classList.add('show');
+        activeIndex = -1;
         return;
       }
-      list.innerHTML = features.map((f, i) => `<div class="autocomplete-item" data-idx="${i}">${formatFull(f)}</div>`).join('');
+      list.innerHTML = sorted.map((f, i) => `<div class="autocomplete-item${i===0 ? ' active' : ''}" data-idx="${i}">${formatFull(f)}</div>`).join('');
       list.classList.add('show');
+      activeIndex = 0;
       list.querySelectorAll('.autocomplete-item').forEach(item => {
         item.addEventListener('mousedown', (e) => {
           e.preventDefault();
@@ -1087,12 +1101,16 @@
       closeList();
     }
 
+    let lastQuery = '';
     async function fetchSuggestions(query){
       try{
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en`;
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en`;
         const res = await fetch(url);
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
+        // If the field changed again while this request was in flight,
+        // drop the stale response instead of overwriting newer results.
+        if(query !== lastQuery) return;
         renderResults((data.features || []).filter(f => f && f.properties));
       }catch(err){
         console.error('Address autocomplete error:', err);
@@ -1102,9 +1120,11 @@
 
     input.addEventListener('input', () => {
       const q = input.value.trim();
+      lastQuery = q;
       clearTimeout(debounceTimer);
-      if(q.length < 4){ closeList(); return; }
-      debounceTimer = setTimeout(() => fetchSuggestions(q), 350);
+      if(q.length < 2){ closeList(); return; }
+      showLoading();
+      debounceTimer = setTimeout(() => fetchSuggestions(q), 150);
     });
 
     input.addEventListener('keydown', (e) => {
