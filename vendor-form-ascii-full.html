@@ -537,13 +537,12 @@
   // Opportunity for them in the Iventora Vendor Onboarding pipeline's
   // New Lead stage - no GHL webhook trigger is involved.
   //
-  // NOTE ON PHOTOS: only text/checkbox fields are sent to GHL - the
-  // actual photo/logo files are NOT sent. Vendors' photos stay on this
-  // page (viewable + downloadable via "Download Submission"). If you
-  // want photos to land directly in the vendor's GHL contact record,
-  // add a native "File Upload" custom field to a GHL form and link
-  // vendors to it as a second step, or ask us to wire up a file-
-  // storage integration.
+  // PHOTOS & LOGO: the logo and every photo the vendor uploads are sent
+  // along with the rest of the form (as multipart/form-data) and land
+  // directly in the GHL Media Library via the same Private Integration
+  // Token. The server then adds a note on the new contact linking every
+  // uploaded file, so photos are easy to find from the contact record -
+  // no separate GHL "File Upload" field or second step required.
   // ============================================================
   const SUBMIT_ENDPOINT = "/submit-application";
 
@@ -671,17 +670,27 @@
   // Same-origin POST to this app's /submit-application endpoint, which
   // creates the Contact + Opportunity in GHL server-side and returns a
   // real JSON result we can read (unlike the old no-cors webhook call).
-  async function sendToGHL(payload){
+  // formData is a real FormData (multipart) so the logo + photo files
+  // travel in the same request as the text fields - the server relays
+  // them straight into the GHL Media Library and links them on a note.
+  async function sendToGHL(formData){
     try{
       const res = await fetch(SUBMIT_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: formData
+        // No Content-Type header - the browser sets multipart/form-data
+        // with the correct boundary automatically for FormData bodies.
       });
       let data = {};
       try{ data = await res.json(); }catch(e){ /* non-JSON response */ }
       if(res.ok && data.ok){
-        return { status: 'sent', contactId: data.contactId, opportunityId: data.opportunityId };
+        return {
+          status: 'sent',
+          contactId: data.contactId,
+          opportunityId: data.opportunityId,
+          filesUploaded: data.filesUploaded || 0,
+          filesFailed: data.filesFailed || 0
+        };
       }
       console.error('GHL submit-application error:', data.error || res.status);
       return { status: 'failed', error: data.error || ('HTTP ' + res.status) };
@@ -760,8 +769,11 @@
       tagline: $('tagline').value,
       description: $('description').value,
       specialties: $('specialties').value,
-      logo: logoFile ? logoFile.name : null,
-      photos: photoFiles.map(f => f.name),
+      // Named logoName/photoNames (not logo/photos) so they don't collide
+      // with the actual file fields appended to FormData below, which use
+      // the plain "logo"/"photos" field names multer expects server-side.
+      logoName: logoFile ? logoFile.name : null,
+      photoNames: photoFiles.map(f => f.name),
       videoLink: $('videoLink').value,
       instagram: $('instagram').value,
       facebook: $('facebook').value,
@@ -777,18 +789,34 @@
       submittedAt: new Date().toISOString()
     };
 
-    // Send text/checkbox data to GHL (photo/logo binaries are not sent -
-    // see the GO HIGHLEVEL CONNECTION note at the top of this script).
+    // Send everything - text fields plus the actual logo/photo files - to
+    // GHL in one multipart request. The server uploads the files to the
+    // GHL Media Library and links them on a note attached to the contact.
+    const formData = new FormData();
+    Object.entries(submission).forEach(([key, val]) => {
+      if(val === null || val === undefined) return;
+      formData.append(key, Array.isArray(val) ? JSON.stringify(val) : val);
+    });
+    if(logoFile) formData.append('logo', logoFile, logoFile.name);
+    photoFiles.forEach(f => formData.append('photos', f, f.name));
+
     const submitBtn = form.querySelector('button.submit');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    const ghlResult = await sendToGHL(submission);
+    const ghlResult = await sendToGHL(formData);
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Application';
 
     let ghlNote = '';
     if(ghlResult.status === 'sent'){
-      ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM - contact and opportunity created.</div>`;
+      const totalFiles = ghlResult.filesUploaded + ghlResult.filesFailed;
+      let fileNote = '';
+      if(totalFiles > 0){
+        fileNote = ghlResult.filesFailed > 0
+          ? ` ${ghlResult.filesUploaded} of ${totalFiles} photo/logo file(s) uploaded (${ghlResult.filesFailed} failed).`
+          : ` ${ghlResult.filesUploaded} photo/logo file(s) uploaded.`;
+      }
+      ghlNote = `<div style="color:var(--success);font-weight:700;">OK Sent to your GHL CRM - contact and opportunity created.${fileNote}</div>`;
     } else {
       ghlNote = `<div style="color:var(--danger);font-weight:700;">WARNING: Could not send to GHL (${ghlResult.error || 'unknown error'}) - the info below was captured locally, but wasn't sent to your CRM.</div>`;
     }

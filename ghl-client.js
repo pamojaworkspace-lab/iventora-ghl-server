@@ -86,3 +86,60 @@ export async function createOpportunity(fields) {
     });
     return data.opportunity || data;
 }
+
+/**
+ * Upload a single file to the GHL Media Library and return { fileId, url }.
+ * Uses multipart/form-data directly (not ghlRequest, which is JSON-only).
+ * Requires the "medias.write" scope on the Private Integration Token.
+ */
+export async function uploadMedia({ buffer, filename, mimetype }) {
+    const token = requireEnv("GHL_PRIVATE_TOKEN");
+
+    const form = new FormData();
+    form.append(
+          "file",
+          new Blob([buffer], { type: mimetype || "application/octet-stream" }),
+          filename || "upload"
+    );
+    form.append("name", filename || "upload");
+
+    const res = await fetch(BASE_URL + "/medias/upload-file", {
+          method: "POST",
+          headers: {
+                Authorization: `Bearer ${token}`,
+                Version: API_VERSION,
+                Accept: "application/json",
+          },
+          body: form,
+    });
+
+    const text = await res.text();
+    let json;
+    try {
+          json = text ? JSON.parse(text) : {};
+    } catch {
+          json = { raw: text };
+    }
+
+    if (!res.ok) {
+          const message =
+                json?.message || json?.error || `GoHighLevel media upload error (HTTP ${res.status})`;
+          const err = new Error(
+                typeof message === "string" ? message : JSON.stringify(message)
+              );
+          err.status = res.status;
+          err.body = json;
+          throw err;
+    }
+
+    return json; // { fileId, url }
+}
+
+/** Add a note to an existing contact. Uses the "contacts.write" scope. */
+export async function addContactNote(contactId, body) {
+    const data = await ghlRequest(`/contacts/${contactId}/notes`, {
+          method: "POST",
+          body: { body },
+    });
+    return data.note || data;
+}

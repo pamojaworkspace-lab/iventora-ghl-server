@@ -1,9 +1,10 @@
 import express from "express";
+import multer from "multer";
 import { readFileSync } from "fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
-import { listPipelines, upsertContact, createOpportunity } from "./ghl-client.js";
+import { listPipelines, upsertContact, createOpportunity, uploadMedia, addContactNote } from "./ghl-client.js";
 
 // This server exposes a small, purpose-built set of GoHighLevel
 // actions scoped to the Iventora vendor pipeline: list pipelines,
@@ -207,55 +208,132 @@ app.get("/apply", (req, res) => {
 const VENDOR_PIPELINE_ID = "uukK0zDBwrFccyRAbM3Z";
 const VENDOR_NEW_LEAD_STAGE_ID = "36fa3f6a-2ab8-43fe-b6f9-76edd8ba94fc";
 
-app.post("/submit-application", async (req, res) => {
-    try {
-        const body = req.body || {};
-        const businessName = body.businessName || body.legalBusinessName;
-        const email = body.email;
-        const phone = body.phone;
-
-        if (!businessName) {
-            return res.status(400).json({ ok: false, error: "businessName is required" });
-        }
-        if (!email && !phone) {
-            return res.status(400).json({ ok: false, error: "email or phone is required" });
-        }
-
-        const contactNameParts = (body.contactName || businessName).trim().split(/\s+/);
-        const firstName = contactNameParts[0];
-        const lastName = contactNameParts.slice(1).join(" ") || undefined;
-
-        const contact = await upsertContact({
-            firstName,
-            lastName,
-            email,
-            phone,
-            companyName: businessName,
-            website: body.website,
-            address1: body.address1,
-            city: body.city,
-            state: body.state,
-            postalCode: body.postalCode,
-            tags: ["vendor-application"].concat(body.categories || []),
-            source: "Iventora Vendor Intake Form",
-        });
-
-        const opp = await createOpportunity({
-            contactId: contact.id,
-            pipelineId: VENDOR_PIPELINE_ID,
-            pipelineStageId: VENDOR_NEW_LEAD_STAGE_ID,
-            name: businessName + " - Vendor Application",
-        });
-
-        res.json({ ok: true, contactId: contact.id, opportunityId: opp.id });
-    } catch (err) {
-        console.error("submit-application error:", err);
-        res.status(err.status || 500).json({
-            ok: false,
-            error: err.message || "Failed to submit application to GHL",
-        });
-    }
+// Accepts multipart/form-data so the vendor's logo + photos travel with the
+// rest of the fields in one request. Files are held in memory only long
+// enough to relay them to the GHL Media Library - never written to disk.
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 25 * 1024 * 1024, files: 25 }, // matches GHL's 25MB/file cap
 });
+
+// Uploads one file to the GHL Media Library. Never throws - a failed
+// upload (bad scope, oversized file, GHL hiccup) is reported back in the
+// result instead of aborting the whole submission, since the contact +
+// opportunity should still be created even if a photo fails to attach.
+async function uploadFileSafe(file, label) {
+    try {
+        const media = await uploadMedia({
+            buffer: file.buffer,
+            filename: file.originalname,
+            mimetype: file.mimetype,
+        });
+        return { label, name: file.originalname, url: media.url, ok: true };
+    } catch (err) {
+        console.error(`${label} upload failed (${file.originalname}):`, err.message);
+        return { label, name: file.originalname, ok: false, error: err.message };
+    }
+}
+
+app.post(
+    "/submit-application",
+    upload.fields([
+        { name: "logo", maxCount: 1 },
+        { name: "photos", maxCount: 20 },
+    ]),
+    async (req, res) => {
+        try {
+            const body = req.body || {};
+            const businessName = body.businessName || body.legalBusinessName;
+            const email = body.email;
+            const phone = body.phone;
+
+            if (!businessName) {
+                return res.status(400).json({ ok: false, error: "businessName is required" });
+            }
+            if (!email && !phone) {
+                return res.status(400).json({ ok: false, error: "email or phone is required" });
+            }
+
+            let categories = [];
+            try {
+                categories = body.categories ? JSON.parse(body.categories) : [];
+            } catch {
+                categories = [];
+            }
+
+            const contactNameParts = (body.contactName || businessName).trim().split(/\s+/);
+            const firstName = contactNameParts[0];
+            const lastName = contactNameParts.slice(1).join(" ") || undefined;
+
+            const contact = await upsertContact({
+                firstName,
+                lastName,
+                email,
+                phone,
+                companyName: businessName,
+                website: body.website,
+                address1: body.address1,
+                city: body.city,
+                state: body.state,
+                postalCode: body.postalCode,
+                tags: ["vendor-application"].concat(categories),
+                source: "Iventora Vendor Intake Form",
+            });
+
+            const opp = await createOpportunity({
+                contactId: contact.id,
+                pipelineId: VENDOR_PIPELINE_ID,
+                pipelineStageId: VENDOR_NEW_LEAD_STAGE_ID,
+                name: businessName + " - Vendor Application",
+            });
+
+            // Upload logo + photos to the GHL Media Library, then link them
+            // all in a note on the contact so they're easy to find and
+            // review from the contact record.
+            const logoFile = req.files?.logo?.[0];
+            const photoFiles = req.files?.photos || [];
+            const uploadJobs = [];
+            if (logoFile) uploadJobs.push(uploadFileSafe(logoFile, "Logo"));
+            for (const f of photoFiles) uploadJobs.push(uploadFileSafe(f, "Photo"));
+            const uploadResults = await Promise.all(uploadJobs);
+            const uploadedFiles = uploadResults.filter((f) => f.ok);
+            const failedFiles = uploadResults.filter((f) => !f.ok);
+
+            if (uploadedFiles.length || failedFiles.length) {
+                const lines = [
+                    `Vendor application file uploads (${uploadedFiles.length} of ${uploadResults.length} succeeded):`,
+                    ...uploadedFiles.map((f) => `${f.label}: ${f.name} — ${f.url}`),
+                ];
+                if (failedFiles.length) {
+                    lines.push(
+                        "",
+                        "Failed to upload:",
+                        ...failedFiles.map((f) => `${f.label}: ${f.name} (${f.error})`)
+                    );
+                }
+                try {
+                    await addContactNote(contact.id, lines.join("\n"));
+                } catch (err) {
+                    console.error("addContactNote failed:", err.message);
+                }
+            }
+
+            res.json({
+                ok: true,
+                contactId: contact.id,
+                opportunityId: opp.id,
+                filesUploaded: uploadedFiles.length,
+                filesFailed: failedFiles.length,
+            });
+        } catch (err) {
+            console.error("submit-application error:", err);
+            res.status(err.status || 500).json({
+                ok: false,
+                error: err.message || "Failed to submit application to GHL",
+            });
+        }
+    }
+);
 
 app.post("/mcp", async (req, res) => {
     try {
@@ -287,6 +365,16 @@ app.get("/mcp", (req, res) => {
           error: { code: -32000, message: "Method not allowed. POST only." },
           id: null,
     });
+});
+
+// Handles multer errors (oversized file, too many files, etc.) so the
+// client gets a clean JSON error instead of Express's default HTML page.
+app.use((err, req, res, next) => {
+    if (err) {
+        console.error("Request error:", err);
+        return res.status(400).json({ ok: false, error: err.message || "Upload error" });
+    }
+    next();
 });
 
 const PORT = process.env.PORT || 3000;
