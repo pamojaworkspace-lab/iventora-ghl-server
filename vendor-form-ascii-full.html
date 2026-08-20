@@ -1396,7 +1396,8 @@
           contactId: data.contactId,
           opportunityId: data.opportunityId,
           filesUploaded: data.filesUploaded || 0,
-          filesFailed: data.filesFailed || 0
+          filesFailed: data.filesFailed || 0,
+          adminDashboard: data.adminDashboard || { ok: false }
         };
       }
       console.error('GHL submit-application error:', data.error || res.status);
@@ -1530,6 +1531,14 @@
       ghlNote = `<div style="color:var(--danger);font-weight:700;">WARNING: Could not send to GHL (${ghlResult.error || 'unknown error'}) - the info below was captured locally, but wasn't sent to your CRM.</div>`;
     }
 
+    let dashboardNote = '';
+    if(ghlResult.status === 'sent'){
+      const dash = ghlResult.adminDashboard || { ok: false };
+      dashboardNote = dash.ok
+        ? `<div style="color:var(--success);font-weight:700;">OK Sent to the Iventora Admin Dashboard - application created for review.</div>`
+        : `<div style="color:var(--danger);font-weight:700;">WARNING: Could not send to the Admin Dashboard (${dash.error || 'unknown error'}) - it was still sent to GHL.</div>`;
+    }
+
     $('summaryBox').innerHTML = `
       <div><b>Business:</b> ${submission.businessName}</div>
       <div><b>Contact:</b> ${submission.contactName} - ${submission.email}</div>
@@ -1541,6 +1550,7 @@
       <div><b>Videos Uploaded:</b> ${videoFiles.length}</div>
       <div><b>Logo Uploaded:</b> ${logoFile ? 'Yes' : 'No'}</div>
       <div style="margin-top:10px;">${ghlNote}</div>
+      <div style="margin-top:6px;">${dashboardNote}</div>
     `;
 
     $('downloadBtn').onclick = () => {

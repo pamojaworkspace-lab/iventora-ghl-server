@@ -208,6 +208,22 @@ app.get("/apply", (req, res) => {
 const VENDOR_PIPELINE_ID = "uukK0zDBwrFccyRAbM3Z";
 const VENDOR_NEW_LEAD_STAGE_ID = "36fa3f6a-2ab8-43fe-b6f9-76edd8ba94fc";
 
+// Every submission also gets created as a VendorApplication in the Iventora
+// Admin Dashboard (a separate Next.js + Postgres app), so the review team
+// can work applications from the dashboard's queue/scorecard UI in addition
+// to GHL. Overridable via env var; defaults to the live production URL.
+const ADMIN_DASHBOARD_URL =
+    process.env.ADMIN_DASHBOARD_URL || "https://iventora-admin-dashboard-production.up.railway.app";
+
+// The form's plan radio uses display labels; the dashboard's Prisma enum
+// uses these exact values. Anything unrecognized (or unselected) falls back
+// to the dashboard's own default (ESSENTIALS).
+const PLAN_TIER_MAP = {
+    Essentials: "ESSENTIALS",
+    Featured: "FEATURED",
+    "Growth+": "GROWTH_PLUS",
+};
+
 // Accepts multipart/form-data so the vendor's logo + photos travel with the
 // rest of the fields in one request. Files are held in memory only long
 // enough to relay them to the GHL Media Library - never written to disk.
@@ -232,6 +248,43 @@ async function uploadFileSafe(file, label) {
         console.error(`${label} upload failed (${file.originalname}):`, err.message);
         return { label, name: file.originalname, ok: false, error: err.message };
     }
+}
+
+// Creates the matching VendorApplication in the Iventora Admin Dashboard.
+// POST /api/applications there is a public, unauthenticated endpoint (same
+// trust model as this server's own /submit-application) that validates the
+// body with zod and does its own duplicate detection. Throws on failure -
+// callers should catch it so a dashboard hiccup never blocks the GHL half
+// of the submission.
+async function submitToAdminDashboard(payload) {
+    const res = await fetch(`${ADMIN_DASHBOARD_URL}/api/applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    const text = await res.text();
+    let json;
+    try {
+        json = text ? JSON.parse(text) : {};
+    } catch {
+        json = { raw: text };
+    }
+
+    if (!res.ok) {
+        const message =
+            json?.error && typeof json.error === "string"
+                ? json.error
+                : json?.error
+                  ? JSON.stringify(json.error)
+                  : `Admin dashboard error (HTTP ${res.status})`;
+        const err = new Error(message);
+        err.status = res.status;
+        err.body = json;
+        throw err;
+    }
+
+    return json; // { id, status }
 }
 
 app.post(
@@ -321,12 +374,71 @@ app.post(
                 }
             }
 
+            // Reuse the GHL Media Library URLs from the upload above so the
+            // dashboard's vendor profile can show the same logo/photos/videos
+            // without re-uploading them anywhere.
+            const logoUrl = uploadedFiles.find((f) => f.label === "Logo")?.url;
+            const photoUrls = uploadedFiles.filter((f) => f.label === "Photo").map((f) => f.url);
+            const videoUrls = uploadedFiles.filter((f) => f.label === "Video").map((f) => f.url);
+            if (body.videoLink) videoUrls.push(body.videoLink);
+
+            let amenities = [];
+            try {
+                amenities = body.amenities ? JSON.parse(body.amenities) : [];
+            } catch {
+                amenities = [];
+            }
+
+            const languages = body.languages
+                ? body.languages
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                : undefined;
+
+            const serviceRadiusMiles = body.serviceRadius ? parseInt(body.serviceRadius, 10) : undefined;
+
+            let adminDashboard = { ok: false };
+            try {
+                const created = await submitToAdminDashboard({
+                    businessName,
+                    ownerName: (body.contactName || businessName).trim(),
+                    email,
+                    phone,
+                    website: body.website || undefined,
+                    categories,
+                    serviceCity: body.city || undefined,
+                    serviceState: body.state || undefined,
+                    serviceZip: body.postalCode || undefined,
+                    serviceRadiusMiles: Number.isFinite(serviceRadiusMiles) ? serviceRadiusMiles : undefined,
+                    languages,
+                    tagline: body.tagline || undefined,
+                    description: body.description,
+                    amenities,
+                    instagramUrl: body.instagram || undefined,
+                    facebookUrl: body.facebook || undefined,
+                    tiktokUrl: body.tiktok || undefined,
+                    websiteUrl: body.website || undefined,
+                    planTier: PLAN_TIER_MAP[body.plan],
+                    billingContactName: body.billingName || undefined,
+                    billingEmail: body.billingEmail || undefined,
+                    logoUrl,
+                    photoUrls,
+                    videoUrls,
+                });
+                adminDashboard = { ok: true, applicationId: created.id };
+            } catch (err) {
+                console.error("submitToAdminDashboard error:", err.message);
+                adminDashboard = { ok: false, error: err.message };
+            }
+
             res.json({
                 ok: true,
                 contactId: contact.id,
                 opportunityId: opp.id,
                 filesUploaded: uploadedFiles.length,
                 filesFailed: failedFiles.length,
+                adminDashboard,
             });
         } catch (err) {
             console.error("submit-application error:", err);
