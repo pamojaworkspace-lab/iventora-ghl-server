@@ -1,0 +1,35 @@
+name: Bootstrap Unpack
+on:
+  push:
+    paths:
+      - 'bootstrap/payload.tar.gz'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract payload into repo root
+        run: |
+          if [ -f bootstrap/payload.tar.gz ]; then
+            tar xzf bootstrap/payload.tar.gz -C .
+            rm -f bootstrap/payload.tar.gz
+            rmdir bootstrap 2>/dev/null || true
+          else
+            echo "No payload found, nothing to do."
+          fi
+      - name: Commit expanded project tree
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "Bootstrap: unpack project payload into repo"
+            git push
+          fi
