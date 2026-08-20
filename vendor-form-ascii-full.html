@@ -137,6 +137,41 @@
   }
   .check-item:hover{background:var(--bg-tint);}
   .check-item input{width:16px;height:16px;accent-color:var(--plum);flex-shrink:0;cursor:pointer;}
+  .autocomplete-wrap{position:relative;}
+  .autocomplete-list{
+    position:absolute;top:100%;left:0;right:0;margin-top:4px;
+    background:#fff;border:1px solid var(--line);border-radius:8px;
+    max-height:220px;overflow-y:auto;box-shadow:0 8px 20px rgba(52,24,49,.15);
+    z-index:50;display:none;
+  }
+  .autocomplete-list.show{display:block;}
+  .autocomplete-item{padding:9px 12px;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .autocomplete-item:last-child{border-bottom:none;}
+  .autocomplete-item:hover, .autocomplete-item.active{background:var(--bg-tint);}
+  .autocomplete-empty{padding:9px 12px;font-size:12.5px;color:var(--text-soft);font-style:italic;}
+  .other-add-row{display:flex;gap:8px;margin-top:12px;}
+  .other-add-row input{
+    flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
+    font-size:13.5px;font-family:inherit;color:var(--text);
+  }
+  .other-add-row input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(181,137,42,.18);}
+  .other-add-row button{
+    background:var(--plum);color:#fff;border:none;padding:0 18px;
+    border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;
+  }
+  .other-add-row button:hover{background:var(--plum-dark);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .chip{
+    display:flex;align-items:center;gap:6px;background:var(--bg-tint);
+    border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 12px;
+    font-size:13px;color:var(--text);
+  }
+  .chip button{
+    width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.15);
+    color:var(--text);border:none;font-size:11px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;
+  }
+  .chip button:hover{background:var(--danger);color:#fff;}
   .plan-options{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   @media (max-width:700px){.plan-options{grid-template-columns:1fr;}}
   .plan{
@@ -263,8 +298,11 @@
         </div>
       </div>
       <div class="field" data-required>
-        <label for="address">Business Address</label>
-        <input type="text" id="address" name="address" required>
+        <label for="address">Business Address <span class="hint">(start typing for suggestions)</span></label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="address" name="address" autocomplete="off" required>
+          <div class="autocomplete-list" id="addressSuggestions"></div>
+        </div>
         <div class="err">Please enter your business address.</div>
       </div>
       <div class="row">
@@ -374,8 +412,41 @@
         <div class="err">Please add a business description.</div>
       </div>
       <div class="field">
-        <label for="specialties">Specialties / Unique Selling Points</label>
-        <textarea id="specialties" name="specialties" rows="3"></textarea>
+        <label>Amenities <span class="hint">(check all that apply)</span></label>
+        <div class="check-grid" id="amenitiesGrid">
+          <label class="check-item"><input type="checkbox" name="amenity" value="Free Parking Available">Free Parking Available</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Wheelchair Accessible">Wheelchair Accessible</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Licensed & Insured">Licensed &amp; Insured</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Eco-Friendly / Sustainable Practices">Eco-Friendly / Sustainable</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Custom Packages Available">Custom Packages Available</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Payment Plans Offered">Payment Plans Offered</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Bilingual Staff">Bilingual Staff</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Pet-Friendly">Pet-Friendly</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Indoor & Outdoor Options">Indoor &amp; Outdoor Options</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Day-Of Coordination Included">Day-Of Coordination</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Same-Day Availability">Same-Day Availability</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Award-Winning">Award-Winning</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Family-Owned">Family-Owned</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Veteran-Owned">Veteran-Owned</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Woman-Owned">Woman-Owned</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Minority-Owned">Minority-Owned</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="LGBTQ+-Owned">LGBTQ+-Owned</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="On-Site Setup & Breakdown">On-Site Setup &amp; Breakdown</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Delivery Available">Delivery Available</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Rush / Last-Minute Bookings">Rush / Last-Minute Bookings</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Free Consultation">Free Consultation</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Virtual / Remote Services Available">Virtual / Remote Services</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="All-Inclusive Pricing">All-Inclusive Pricing</label>
+          <label class="check-item"><input type="checkbox" name="amenity" value="Referral Discounts">Referral Discounts</label>
+          <label class="check-item"><input type="checkbox" id="amenityOtherToggle">Other <span class="hint">(specify)</span></label>
+        </div>
+        <div id="otherAmenitiesWrap" style="display:none;">
+          <div class="other-add-row">
+            <input type="text" id="otherAmenityInput" placeholder="Type a custom amenity, then press Add or Enter">
+            <button type="button" id="otherAmenityAddBtn">Add</button>
+          </div>
+          <div class="chip-row" id="otherAmenityChips"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -656,6 +727,167 @@
     renderPhotoThumbs();
   });
 
+  // ------------------------------------------------------------
+  // Address autocomplete (Photon by komoot - free, no API key needed).
+  // Type-ahead suggestions for the Business Address field; picking one
+  // fills in both the street address and the City/State/ZIP field.
+  // Docs: https://photon.komoot.io/
+  // ------------------------------------------------------------
+  (function initAddressAutocomplete(){
+    const input = $('address');
+    const list = $('addressSuggestions');
+    let debounceTimer = null;
+    let activeIndex = -1;
+    let currentResults = [];
+
+    function formatStreet(p){
+      if(p.housenumber && p.street) return `${p.housenumber} ${p.street}`;
+      if(p.street) return p.street;
+      if(p.name) return p.name;
+      return '';
+    }
+    function formatCityStateZip(p){
+      const city = p.city || p.town || p.village || p.county || '';
+      let out = city;
+      if(p.state) out += (out ? ', ' : '') + p.state;
+      if(p.postcode) out += ' ' + p.postcode;
+      return out.trim();
+    }
+    function formatFull(feature){
+      const p = feature.properties || {};
+      return [formatStreet(p), formatCityStateZip(p)].filter(Boolean).join(', ');
+    }
+
+    function closeList(){
+      list.classList.remove('show');
+      list.innerHTML = '';
+      activeIndex = -1;
+    }
+
+    function renderResults(features){
+      currentResults = features;
+      if(!features.length){
+        list.innerHTML = '<div class="autocomplete-empty">No matches found - you can still type the address manually.</div>';
+        list.classList.add('show');
+        return;
+      }
+      list.innerHTML = features.map((f, i) => `<div class="autocomplete-item" data-idx="${i}">${formatFull(f)}</div>`).join('');
+      list.classList.add('show');
+      list.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          selectResult(Number(item.dataset.idx));
+        });
+      });
+    }
+
+    function selectResult(idx){
+      const feature = currentResults[idx];
+      if(!feature) return;
+      const p = feature.properties || {};
+      const street = formatStreet(p);
+      const csz = formatCityStateZip(p);
+      if(street) input.value = street;
+      if(csz) $('cityState').value = csz;
+      setFieldError(input, false);
+      setFieldError($('cityState'), false);
+      closeList();
+    }
+
+    async function fetchSuggestions(query){
+      try{
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        renderResults((data.features || []).filter(f => f && f.properties));
+      }catch(err){
+        console.error('Address autocomplete error:', err);
+        closeList();
+      }
+    }
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      clearTimeout(debounceTimer);
+      if(q.length < 4){ closeList(); return; }
+      debounceTimer = setTimeout(() => fetchSuggestions(q), 350);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      const items = list.querySelectorAll('.autocomplete-item');
+      if(!items.length) return;
+      if(e.key === 'ArrowDown'){
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        items.forEach((it,i) => it.classList.toggle('active', i === activeIndex));
+        items[activeIndex].scrollIntoView({block:'nearest'});
+      } else if(e.key === 'ArrowUp'){
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+        items.forEach((it,i) => it.classList.toggle('active', i === activeIndex));
+        items[activeIndex].scrollIntoView({block:'nearest'});
+      } else if(e.key === 'Enter'){
+        if(activeIndex >= 0){
+          e.preventDefault();
+          selectResult(activeIndex);
+        }
+      } else if(e.key === 'Escape'){
+        closeList();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      // Delay so a mousedown selection on a suggestion still registers
+      // before the list gets closed by the blur.
+      setTimeout(closeList, 120);
+    });
+  })();
+
+  // ------------------------------------------------------------
+  // Amenities: checkbox grid plus an "Other" option that lets vendors
+  // add any number of custom amenity entries as removable chips.
+  // ------------------------------------------------------------
+  let otherAmenities = [];
+  const amenityOtherToggle = $('amenityOtherToggle');
+  const otherAmenitiesWrap = $('otherAmenitiesWrap');
+  const otherAmenityInput = $('otherAmenityInput');
+  const otherAmenityChips = $('otherAmenityChips');
+
+  amenityOtherToggle.addEventListener('change', () => {
+    otherAmenitiesWrap.style.display = amenityOtherToggle.checked ? 'block' : 'none';
+    if(amenityOtherToggle.checked) otherAmenityInput.focus();
+  });
+
+  function renderOtherAmenityChips(){
+    otherAmenityChips.innerHTML = otherAmenities.map((val, i) =>
+      `<span class="chip">${val}<button type="button" data-idx="${i}" aria-label="Remove ${val}">x</button></span>`
+    ).join('');
+    otherAmenityChips.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        otherAmenities.splice(Number(btn.dataset.idx), 1);
+        renderOtherAmenityChips();
+      });
+    });
+  }
+
+  function addOtherAmenity(){
+    const val = otherAmenityInput.value.trim();
+    if(!val) return;
+    otherAmenities.push(val);
+    otherAmenityInput.value = '';
+    renderOtherAmenityChips();
+    otherAmenityInput.focus();
+  }
+
+  otherAmenityInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      addOtherAmenity();
+    }
+  });
+  $('otherAmenityAddBtn').addEventListener('click', addOtherAmenity);
+
   // Default date = today
   $('signDate').valueAsDate = new Date();
 
@@ -730,6 +962,7 @@
     // Build summary
     const categories = Array.from(form.querySelectorAll('input[name="category"]:checked')).map(c => c.value);
     const locations = Array.from(form.querySelectorAll('input[name="location"]:checked')).map(c => c.value);
+    const amenities = Array.from(form.querySelectorAll('input[name="amenity"]:checked')).map(c => c.value).concat(otherAmenities);
     const plan = (form.querySelector('input[name="plan"]:checked') || {}).value || 'Not selected';
 
     // Best-effort split of the single "City, ST 12345" field into the
@@ -763,12 +996,11 @@
       email: $('email').value,
       phone: $('phone').value,
       preferredContact: $('contactMethod').value,
-      categories, locations,
+      categories, locations, amenities,
       serviceRadius: $('radius').value,
       languages: $('languages').value,
       tagline: $('tagline').value,
       description: $('description').value,
-      specialties: $('specialties').value,
       // Named logoName/photoNames (not logo/photos) so they don't collide
       // with the actual file fields appended to FormData below, which use
       // the plain "logo"/"photos" field names multer expects server-side.
@@ -826,6 +1058,7 @@
       <div><b>Contact:</b> ${submission.contactName} - ${submission.email}</div>
       <div><b>Categories:</b> ${categories.join(', ') || '-'}</div>
       <div><b>Service Areas:</b> ${locations.join(', ') || '-'}</div>
+      <div><b>Amenities:</b> ${amenities.join(', ') || '-'}</div>
       <div><b>Plan:</b> ${plan}</div>
       <div><b>Photos Uploaded:</b> ${photoFiles.length}</div>
       <div><b>Logo Uploaded:</b> ${logoFile ? 'Yes' : 'No'}</div>
@@ -853,6 +1086,9 @@
     form.reset();
     logoFile = null;
     photoFiles = [];
+    otherAmenities = [];
+    otherAmenitiesWrap.style.display = 'none';
+    otherAmenityChips.innerHTML = '';
     $('logoThumb').innerHTML = '';
     $('photoThumbs').innerHTML = '';
     updatePhotoCount();
