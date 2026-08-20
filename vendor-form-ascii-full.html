@@ -1065,9 +1065,13 @@
     function renderResults(features){
       // Show the most complete matches first (full street number + name)
       // so a fully-typed address surfaces immediately instead of getting
-      // buried under vaguer place-only results.
+      // buried under vaguer place-only results. Some records fold the
+      // house number into the street text instead of a separate field
+      // (e.g. "350 S. Fifth Ave"), so check for a leading digit too -
+      // otherwise those get mis-scored as "vague" and pushed down.
+      const hasNumber = (p) => !!p.housenumber || /^\d/.test(p.street || p.name || '');
       const sorted = features.slice().sort((a, b) => {
-        const score = (f) => (f.properties.housenumber ? 2 : f.properties.street ? 1 : 0);
+        const score = (f) => hasNumber(f.properties) ? 2 : (f.properties.street ? 1 : 0);
         return score(b) - score(a);
       });
       currentResults = sorted;
@@ -1107,7 +1111,7 @@
         // Iventora is US-only, so nudge (not restrict) ranking toward the
         // continental US - otherwise short queries like "350 Fifth Ave"
         // can surface Canadian/international matches above US ones.
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en&lat=39.8283&lon=-98.5795&zoom=4`;
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en&lat=39.8283&lon=-98.5795&zoom=8`;
         const res = await fetch(url);
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
